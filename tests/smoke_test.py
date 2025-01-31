@@ -2,8 +2,7 @@ from promethean.datasets import HubDataset, HubSplit
 from promethean.extract import (
     extract_training_data, GenerationConfig, ClientOpts
 )
-import promethean.axolotl as axolotl
-from promethean.llama import LlamaLora
+from promethean.lora import LoraSettings
 import os
 
 output_dir="output"
@@ -31,7 +30,7 @@ def extract():
     ))
 
 def gen_axolotl():
-    lora_settings = LlamaLora(
+    lora_settings = LoraSettings(
         lora_r=32,
         lora_alpha=64,
         lora_dropout=0.01,

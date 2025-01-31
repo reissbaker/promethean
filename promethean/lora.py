@@ -4,7 +4,7 @@ import promethean.axolotl as axolotl
 from .datasets import HubDataset, JsonlDataset
 
 @dataclass
-class LlamaLora:
+class LoraSettings:
     lora_r: int
     lora_alpha: int
     num_epochs: int
