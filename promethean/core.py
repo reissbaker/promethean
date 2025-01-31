@@ -47,7 +47,7 @@ class ClientOpts:
 class GenerationConfig:
     datasets: List[HubDataset | JsonlDataset]
     teacher: str
-    batch_size: int
+    request_batch_size: int
     output_dir: str
     client_opts: ClientOpts
 
@@ -109,7 +109,7 @@ def with_batches(
             pbar.update(len(batch))
 
 
-def hf_prompts(split: HubSplitData, batch_size: int):
+def hf_prompts(split: HubSplitData, request_batch_size: int):
     ds = load_dataset(split.dataset.name, split=split.split)
     max_rows = split.max_rows
     def items():
@@ -122,12 +122,12 @@ def hf_prompts(split: HubSplitData, batch_size: int):
 
     yield from with_batches(
         items(),
-        batch_size,
+        request_batch_size,
         f"Generating {split.dataset.name} {split.split} completions",
         max_rows or len(ds)
     )
 
-def jsonl_prompts(split: JsonlSplit, batch_size: int):
+def jsonl_prompts(split: JsonlSplit, request_batch_size: int):
     # Count lines first for progress bar
     with open(split.dataset.path, 'r') as f:
         total_lines = sum(1 for _ in f)
@@ -139,19 +139,19 @@ def jsonl_prompts(split: JsonlSplit, batch_size: int):
 
     yield from with_batches(
         items(),
-        batch_size,
+        request_batch_size,
         f"Generating {split.dataset.name} completions",
         total_lines
     )
 
-def prompts(split: HubSplitData | JsonlSplit, batch_size: int):
+def prompts(split: HubSplitData | JsonlSplit, request_batch_size: int):
     if(isinstance(split, HubSplitData)):
-        yield from hf_prompts(split, batch_size)
+        yield from hf_prompts(split, request_batch_size)
     else:
-        yield from jsonl_prompts(split, batch_size)
+        yield from jsonl_prompts(split, request_batch_size)
 
 async def process_split(
-    batch_size: int,
+    request_batch_size: int,
     split: HubSplitData | JsonlSplit,
     teacher: str,
     client_opts: ClientOpts,
@@ -163,7 +163,7 @@ async def process_split(
     }
 
     async with aiohttp.ClientSession() as session:
-        for batch in prompts(split, batch_size):
+        for batch in prompts(split, request_batch_size):
             async for result in process_batch(
                 session=session,
                 url=url,
@@ -221,7 +221,7 @@ async def generate_async(config: GenerationConfig):
             with open(split.output_path, "w") as f:
                 async for dialog in process_split(
                     split=split,
-                    batch_size=config.batch_size,
+                    request_batch_size=config.request_batch_size,
                     teacher=config.teacher,
                     client_opts=config.client_opts,
                 ):

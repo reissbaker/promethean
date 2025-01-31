@@ -16,7 +16,7 @@ extract_training_data(GenerationConfig(
     ],
 
     teacher="hf:meta-llama/Meta-Llama-3.1-8B-Instruct",
-    batch_size=8,
+    request_batch_size=8,
     output_dir="output",
     client_opts=ClientOpts(
         base_url="https://glhf.chat/api/openai/v1",
