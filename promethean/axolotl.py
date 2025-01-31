@@ -87,7 +87,7 @@ class FullConfig(Config):
     flash_attention: bool = True
 
     saves_per_epoch: int = 1
-    weight_decay: float = 0.0
+    weight_decay: float = 0.01
     fsdp: Sequence[str] = field(default_factory=lambda: [
         "full_shard",
         "auto_wrap",
@@ -96,6 +96,12 @@ class FullConfig(Config):
     special_tokens: dict[str, str] = field(default_factory=lambda: {
         "pad_token": "<|end_of_text|>"
     })
+
+    def save(self, output_dir: str):
+        file_contents = yaml.dump(asdict(self), default_flow_style=False)
+        path = os.path.join(output_dir, "axolotl.yaml")
+        with open(path, "w") as f:
+            f.write(file_contents)
 
 def config(datasets: Sequence[HubDataset | JsonlDataset], config: Config):
     return FullConfig(
@@ -112,9 +118,3 @@ def config(datasets: Sequence[HubDataset | JsonlDataset], config: Config):
         warmup_steps=config.warmup_steps,
         evals_per_epoch=config.evals_per_epoch,
     )
-
-def save(output_dir: str, config: FullConfig):
-    file_contents = yaml.dump(asdict(config), default_flow_style=False)
-    path = os.path.join(output_dir, "axolotl.yaml")
-    with open(path, "w") as f:
-        f.write(file_contents)
