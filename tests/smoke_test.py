@@ -15,29 +15,31 @@ datasets = [
     ),
 ]
 
+extractor = Extractor(
+    datasets=datasets,
+    teacher="hf:meta-llama/Meta-Llama-3.1-8B-Instruct",
+    request_batch_size=8,
+    output_dir=output_dir,
+    client_opts=ClientOpts(
+        base_url="https://glhf.chat/api/openai/v1",
+        api_key=os.environ["GLHF_API_KEY"],
+    ),
+)
+
+lora_settings = LoraSettings(
+    lora_r=32,
+    lora_alpha=64,
+    lora_dropout=0.01,
+    num_epochs=10,
+    learning_rate=4e-4,
+    warmup_steps=10,
+)
+axolotl_config = lora_settings.llama_70b_axolotl(datasets)
+
 def extract():
-    extractor = Extractor(
-        datasets=datasets,
-        teacher="hf:meta-llama/Meta-Llama-3.1-8B-Instruct",
-        request_batch_size=8,
-        output_dir=output_dir,
-        client_opts=ClientOpts(
-            base_url="https://glhf.chat/api/openai/v1",
-            api_key=os.environ["GLHF_API_KEY"],
-        ),
-    )
     extractor.run()
 
 def gen_axolotl():
-    lora_settings = LoraSettings(
-        lora_r=32,
-        lora_alpha=64,
-        lora_dropout=0.01,
-        num_epochs=10,
-        learning_rate=4e-4,
-        warmup_steps=10,
-    )
-    axolotl_config = lora_settings.llama_70b_axolotl(datasets)
     axolotl_config.save(output_dir)
 
 gen_axolotl()

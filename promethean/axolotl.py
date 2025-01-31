@@ -47,6 +47,24 @@ class Config:
     learning_rate: float
     warmup_steps: int
     evals_per_epoch: int
+    weight_decay: float
+
+    def generate(self, datasets: Sequence[HubDataset | JsonlDataset]):
+        return FullConfig(
+            base_model=self.base_model,
+            datasets=[],
+            test_datasets=[],
+            lora_r=self.lora_r,
+            lora_alpha=self.lora_alpha,
+            lora_dropout=self.lora_dropout,
+            gradient_accumulation_steps=self.gradient_accumulation_steps,
+            micro_batch_size=self.micro_batch_size,
+            num_epochs=self.num_epochs,
+            learning_rate=self.learning_rate,
+            warmup_steps=self.warmup_steps,
+            evals_per_epoch=self.evals_per_epoch,
+            weight_decay=self.weight_decay,
+        )
 
 @dataclass
 class FullConfig(Config):
@@ -87,7 +105,6 @@ class FullConfig(Config):
     flash_attention: bool = True
 
     saves_per_epoch: int = 1
-    weight_decay: float = 0.01
     fsdp: Sequence[str] = field(default_factory=lambda: [
         "full_shard",
         "auto_wrap",
@@ -103,18 +120,3 @@ class FullConfig(Config):
         with open(path, "w") as f:
             f.write(file_contents)
 
-def config(datasets: Sequence[HubDataset | JsonlDataset], config: Config):
-    return FullConfig(
-        base_model=config.base_model,
-        datasets=[],
-        test_datasets=[],
-        lora_r=config.lora_r,
-        lora_alpha=config.lora_alpha,
-        lora_dropout=config.lora_dropout,
-        gradient_accumulation_steps=config.gradient_accumulation_steps,
-        micro_batch_size=config.micro_batch_size,
-        num_epochs=config.num_epochs,
-        learning_rate=config.learning_rate,
-        warmup_steps=config.warmup_steps,
-        evals_per_epoch=config.evals_per_epoch,
-    )
