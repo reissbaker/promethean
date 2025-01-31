@@ -29,12 +29,23 @@ class ClientOpts:
 
 
 @dataclass
-class GenerationConfig:
+class Extractor:
     datasets: Sequence[HubDataset | JsonlDataset]
     teacher: str
     request_batch_size: int
     output_dir: str
     client_opts: ClientOpts
+
+    def run(self):
+        coro = generate_async(self)
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:  # No running event loop
+            # No running event loop, create one
+            asyncio.run(coro)
+        else:
+            # If there's a running event loop, use it
+            loop.create_task(coro)
 
 async def make_request(session, url: str, headers: dict[str, str], payload, retries: int):
     for attempt in range(retries):
@@ -196,7 +207,7 @@ def splits(output_dir: str, dataset: HubDataset | JsonlDataset):
             dataset=dataset,
         )
 
-async def generate_async(config: GenerationConfig):
+async def generate_async(config: Extractor):
     # Process train and test splits
     for dataset in config.datasets:
         for split in splits(config.output_dir, dataset):
@@ -214,14 +225,3 @@ async def generate_async(config: GenerationConfig):
                     f.write("\n")
 
     print("Done!")
-
-def extract_training_data(config: GenerationConfig):
-    coro = generate_async(config)
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:  # No running event loop
-        # No running event loop, create one
-        asyncio.run(coro)
-    else:
-        # If there's a running event loop, use it
-        loop.create_task(coro)

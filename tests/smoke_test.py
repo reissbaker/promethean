@@ -1,7 +1,5 @@
 from promethean.datasets import HubDataset, HubSplit
-from promethean.extract import (
-    extract_training_data, GenerationConfig, ClientOpts
-)
+from promethean.extract import Extractor, ClientOpts
 from promethean.lora import LoraSettings
 import os
 
@@ -18,7 +16,7 @@ datasets = [
 ]
 
 def extract():
-    extract_training_data(GenerationConfig(
+    extractor = Extractor(
         datasets=datasets,
         teacher="hf:meta-llama/Meta-Llama-3.1-8B-Instruct",
         request_batch_size=8,
@@ -27,7 +25,8 @@ def extract():
             base_url="https://glhf.chat/api/openai/v1",
             api_key=os.environ["GLHF_API_KEY"],
         ),
-    ))
+    )
+    extractor.run()
 
 def gen_axolotl():
     lora_settings = LoraSettings(
