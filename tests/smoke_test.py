@@ -1,5 +1,6 @@
+from promethean.datasets import HubDataset, HubSplit
 from promethean.extract import (
-    extract_training_data, GenerationConfig, ClientOpts, HubDataset, HubSplit
+    extract_training_data, GenerationConfig, ClientOpts
 )
 import os
 

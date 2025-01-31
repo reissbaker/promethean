@@ -8,23 +8,7 @@ from itertools import islice
 from typing import List, TypeVar, Iterator, TypedDict, Sequence
 import os
 from dataclasses import dataclass
-
-@dataclass
-class HubSplit:
-    name: str
-    max_rows: int | None = None
-
-@dataclass
-class HubDataset:
-    name: str
-    splits: List[str | HubSplit]
-    text_field: str
-
-@dataclass
-class JsonlDataset:
-    path: str
-    name: str
-    text_field: str
+from .datasets import HubSplit, HubDataset, JsonlDataset
 
 @dataclass
 class HubSplitData:
