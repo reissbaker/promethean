@@ -3,6 +3,7 @@ from promethean.extract import (
     extract_training_data, GenerationConfig, ClientOpts
 )
 import promethean.axolotl as axolotl
+from promethean.llama import save_llama_70b_axolotl, LlamaConfig
 import os
 
 output_dir="output"
@@ -30,17 +31,13 @@ def extract():
     ))
 
 def gen_axolotl():
-    axolotl.save(output_dir, axolotl.config(datasets, axolotl.Config(
-        base_model="unsloth/Meta-Llama-3.1-70B-Instruct",
+    save_llama_70b_axolotl(output_dir, datasets, LlamaConfig(
         lora_r=32,
         lora_alpha=64,
         lora_dropout=0.01,
-        gradient_accumulation_steps=4,
-        micro_batch_size=2,
         num_epochs=10,
         learning_rate=4e-4,
         warmup_steps=10,
-        evals_per_epoch=1,
-    )))
+    ))
 
 gen_axolotl()
