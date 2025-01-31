@@ -5,7 +5,7 @@ import json
 import asyncio
 import aiohttp
 from itertools import islice
-from typing import List, TypeVar, Iterator, TypedDict
+from typing import List, TypeVar, Iterator, TypedDict, Sequence
 import os
 from dataclasses import dataclass
 
@@ -43,9 +43,10 @@ class ClientOpts:
     base_url: str
     api_key: str
 
+
 @dataclass
 class GenerationConfig:
-    datasets: List[HubDataset | JsonlDataset] | List[HubDataset] | List[JsonlDataset]
+    datasets: Sequence[HubDataset | JsonlDataset]
     teacher: str
     request_batch_size: int
     output_dir: str
