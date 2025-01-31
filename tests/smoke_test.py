@@ -1,4 +1,4 @@
-from promethean.core import (
+from promethean.extract import (
     extract_training_data, GenerationConfig, ClientOpts, HubDataset, HubSplit
 )
 import os
