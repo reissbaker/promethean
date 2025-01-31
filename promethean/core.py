@@ -45,7 +45,7 @@ class ClientOpts:
 
 @dataclass
 class GenerationConfig:
-    datasets: List[HubDataset | JsonlDataset]
+    datasets: List[HubDataset | JsonlDataset] | List[HubDataset] | List[JsonlDataset]
     teacher: str
     request_batch_size: int
     output_dir: str

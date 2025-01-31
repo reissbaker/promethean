@@ -3,18 +3,19 @@ from promethean.core import (
 )
 import os
 
-extract_training_data(GenerationConfig(
-    datasets=[
-        HubDataset(
-            name="mlabonne/harmless_alpaca",
-            text_field="text",
-            splits=[
-                HubSplit(name="train", max_rows=100),
-                HubSplit(name="test", max_rows=20),
-            ],
-        )
-    ],
+datasets = [
+    HubDataset(
+        name="mlabonne/harmless_alpaca",
+        text_field="text",
+        splits=[
+            HubSplit(name="train", max_rows=100),
+            HubSplit(name="test", max_rows=20),
+        ],
+    ),
+]
 
+extract_training_data(GenerationConfig(
+    datasets=datasets,
     teacher="hf:meta-llama/Meta-Llama-3.1-8B-Instruct",
     request_batch_size=8,
     output_dir="output",
