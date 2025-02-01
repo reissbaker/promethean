@@ -1,11 +1,11 @@
-from promethean.datasets import HubDataset, HubSplit
+from promethean.datasets import HubPrompts, HubSplit
 from promethean.extract import Extractor, ClientOpts
 from promethean.lora import LoraSettings
 import os
 
 output_dir="output"
 datasets = [
-    HubDataset(
+    HubPrompts(
         name="mlabonne/harmless_alpaca",
         text_field="text",
         splits=[

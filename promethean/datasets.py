@@ -7,13 +7,22 @@ class HubSplit:
     max_rows: int | None = None
 
 @dataclass
-class HubDataset:
+class HubPrompts:
     name: str
     splits: Sequence[str | HubSplit]
     text_field: str
 
 @dataclass
-class JsonlDataset:
+class JsonlPrompts:
     path: str
     name: str
     text_field: str
+
+@dataclass
+class JsonlConvos:
+    path: str
+
+@dataclass
+class HubConvos:
+    name: str
+    splits: Sequence[str | HubSplit]

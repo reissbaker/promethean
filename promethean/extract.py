@@ -8,19 +8,19 @@ from itertools import islice
 from typing import List, TypeVar, Iterator, TypedDict, Sequence
 import os
 from dataclasses import dataclass
-from .datasets import HubSplit, HubDataset, JsonlDataset
+from .datasets import HubSplit, HubPrompts, JsonlPrompts
 
 @dataclass
 class HubSplitData:
     split: str
     output_path: str
-    dataset: HubDataset
+    dataset: HubPrompts
     max_rows: int | None
 
 @dataclass
 class JsonlSplit:
     output_path: str
-    dataset: JsonlDataset
+    dataset: JsonlPrompts
 
 @dataclass
 class ClientOpts:
@@ -30,7 +30,7 @@ class ClientOpts:
 
 @dataclass
 class Extractor:
-    datasets: Sequence[HubDataset | JsonlDataset]
+    datasets: Sequence[HubPrompts | JsonlPrompts]
     teacher: str
     request_batch_size: int
     output_dir: str
@@ -169,8 +169,8 @@ async def process_split(
             ):
                 yield result
 
-def splits(output_dir: str, dataset: HubDataset | JsonlDataset):
-    if(isinstance(dataset, HubDataset)):
+def splits(output_dir: str, dataset: HubPrompts | JsonlPrompts):
+    if(isinstance(dataset, HubPrompts)):
         for split in dataset.splits:
             output_path = os.path.join(
                 output_dir,
