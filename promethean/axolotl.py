@@ -1,5 +1,5 @@
 from typing import Sequence, TypedDict
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict, replace
 import yaml
 import os
 from .datasets import Dataset, Convos, HubConvos, JsonlConvos
@@ -122,8 +122,18 @@ class FullConfig(Config):
     })
 
     def save(self, output_dir: str):
-        file_contents = yaml.dump(asdict(self), default_flow_style=False)
+        clone = replace(self)
+        for convos in clone.datasets:
+            rewrite_ds_paths(output_dir, convos)
+        for convos in clone.test_datasets:
+            rewrite_ds_paths(output_dir, convos)
+        file_contents = yaml.dump(asdict(clone), default_flow_style=False)
         path = os.path.join(output_dir, "axolotl.yaml")
         with open(path, "w") as f:
             f.write(file_contents)
 
+def rewrite_ds_paths(output_dir: str, convos: AxolotlJsonlConvos | HubConvos):
+    if isinstance(convos, HubConvos):
+        return
+
+    convos.path = "./" + os.path.relpath(convos.path, output_dir)
