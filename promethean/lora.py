@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Sequence
 import promethean.axolotl as axolotl
-from .datasets import HubDataset, JsonlDataset
+from .datasets import Dataset, Convos
 
 @dataclass
 class LoraSettings:
@@ -14,7 +14,7 @@ class LoraSettings:
     warmup_steps: int = 10
     evals_per_epoch: int = 1
 
-    def llama_70b_axolotl(self, datasets: Sequence[HubDataset | JsonlDataset]):
+    def llama_70b_axolotl(self, dataset: Dataset[Convos]):
         config = axolotl.Config(
             base_model="unsloth/Meta-Llama-3.1-70B-Instruct",
             lora_r=self.lora_r,
@@ -28,4 +28,4 @@ class LoraSettings:
             evals_per_epoch=self.evals_per_epoch,
             weight_decay=self.weight_decay,
         )
-        return config.generate(datasets)
+        return config.generate(dataset)

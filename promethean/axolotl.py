@@ -2,11 +2,11 @@ from typing import Sequence, TypedDict
 from dataclasses import dataclass, field, asdict
 import yaml
 import os
-from .datasets import HubDataset, JsonlDataset
+from .datasets import Dataset, Convos, HubConvos, JsonlConvos
 
 @dataclass
-class AxolotlDataset:
-    path: str = "/workspace/train.jsonl"
+class AxolotlJsonlConvos:
+    path: str
     ds_type: str = "json"
     split: str = "train"
     type: str = "chat_template"
@@ -49,11 +49,12 @@ class Config:
     evals_per_epoch: int
     weight_decay: float
 
-    def generate(self, datasets: Sequence[HubDataset | JsonlDataset]):
+    def generate(self, dataset: Dataset[Convos]):
+        eval = dataset.eval if dataset.eval else []
         return FullConfig(
             base_model=self.base_model,
-            datasets=[],
-            test_datasets=[],
+            datasets=[convert_dataset(ds) for ds in dataset.train],
+            test_datasets=[convert_dataset(ds) for ds in eval],
             lora_r=self.lora_r,
             lora_alpha=self.lora_alpha,
             lora_dropout=self.lora_dropout,
@@ -66,10 +67,16 @@ class Config:
             weight_decay=self.weight_decay,
         )
 
+def convert_dataset(dataset: HubConvos | JsonlConvos):
+    if isinstance(dataset, HubConvos):
+        return dataset
+    else:
+        return AxolotlJsonlConvos(path=dataset.path)
+
 @dataclass
 class FullConfig(Config):
-    datasets: Sequence[AxolotlDataset]
-    test_datasets: Sequence[AxolotlDataset]
+    datasets: Sequence[AxolotlJsonlConvos | HubConvos]
+    test_datasets: Sequence[AxolotlJsonlConvos | HubConvos]
 
     # optionally might have model_type or tokenizer_type
     model_type: str = "LlamaForCausalLM"

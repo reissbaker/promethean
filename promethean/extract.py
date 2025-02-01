@@ -8,7 +8,7 @@ from itertools import islice
 from typing import List, TypeVar, Iterator, TypedDict, Sequence
 import os
 from dataclasses import dataclass
-from .datasets import HubSplit, HubPrompts, JsonlPrompts
+from .datasets import HubSplit, HubPrompts, JsonlPrompts, JsonlConvos, Dataset, Prompts
 
 @dataclass
 class HubSplitData:
@@ -30,22 +30,34 @@ class ClientOpts:
 
 @dataclass
 class Extractor:
-    datasets: Sequence[HubPrompts | JsonlPrompts]
     teacher: str
     request_batch_size: int
     output_dir: str
     client_opts: ClientOpts
+    dataset: Dataset[Prompts]
 
     def run(self):
         coro = generate_async(self)
         try:
             loop = asyncio.get_running_loop()
-        except RuntimeError:  # No running event loop
+            future = loop.run_corouting_threadsafe(coro)
+            return future.result()
+        except RuntimeError:
             # No running event loop, create one
-            asyncio.run(coro)
-        else:
-            # If there's a running event loop, use it
-            loop.create_task(coro)
+            return asyncio.run(coro)
+
+    def output_dataset(self) -> Dataset[JsonlConvos]:
+        return Dataset(
+            train=get_jsonl_convos(self.output_dir, self.dataset.train),
+            eval=get_jsonl_convos(self.output_dir, self.dataset.eval),
+        )
+
+def get_jsonl_convos(output_dir: str, datasets: Sequence[Prompts]):
+    output_convos: List[JsonlConvos] = []
+    for dataset in datasets:
+        for split in splits(output_dir, dataset):
+            output_convos.append(JsonlConvos(path=split.output_path))
+    return output_convos
 
 async def make_request(session, url: str, headers: dict[str, str], payload, retries: int):
     for attempt in range(retries):
@@ -63,7 +75,9 @@ async def make_request(session, url: str, headers: dict[str, str], payload, retr
                 raise
             await asyncio.sleep(1 * (attempt + 1))
 
-async def process_batch(session, url: str, headers: dict[str, str], prompts: List[str], teacher: str):
+async def process_batch(
+    session, url: str, headers: dict[str, str], prompts: List[str], teacher: str
+):
     tasks = []
 
     for prompt in prompts:
@@ -207,10 +221,12 @@ def splits(output_dir: str, dataset: HubPrompts | JsonlPrompts):
             dataset=dataset,
         )
 
-async def generate_async(config: Extractor):
-    # Process train and test splits
-    for dataset in config.datasets:
+async def generate_for_datasets(config: Extractor, datasets: Sequence[Prompts]):
+    output_convos: List[JsonlConvos] = []
+    for dataset in datasets:
         for split in splits(config.output_dir, dataset):
+            output_convos.append(JsonlConvos(path=split.output_path))
+
             output_dir = os.path.dirname(split.output_path)
             os.makedirs(output_dir, exist_ok=True)
 
@@ -223,5 +239,12 @@ async def generate_async(config: Extractor):
                 ):
                     f.write(json.dumps({ "conversations": dialog }))
                     f.write("\n")
+    return output_convos
 
-    print("Done!")
+async def generate_async(config: Extractor):
+    # Process train and test splits
+    train = await generate_for_datasets(config, config.dataset.train)
+    eval = await generate_for_datasets(config, config.dataset.eval)
+
+    print("Done extracting!")
+    return Dataset(train=train, eval=eval)

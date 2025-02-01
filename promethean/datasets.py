@@ -1,5 +1,11 @@
 from dataclasses import dataclass
-from typing import TypedDict, Sequence
+from typing import TypedDict, Sequence, Literal, TypeVar, Generic
+
+T = TypeVar("T")
+@dataclass
+class Dataset(Generic[T]):
+    train: Sequence[T]
+    eval: Sequence[T] | None = None
 
 @dataclass
 class HubSplit:
@@ -18,6 +24,8 @@ class JsonlPrompts:
     name: str
     text_field: str
 
+Prompts = HubPrompts | JsonlPrompts
+
 @dataclass
 class JsonlConvos:
     path: str
@@ -25,4 +33,7 @@ class JsonlConvos:
 @dataclass
 class HubConvos:
     name: str
+    type: str
     splits: Sequence[str | HubSplit]
+
+Convos = JsonlConvos | HubConvos
