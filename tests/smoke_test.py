@@ -27,8 +27,8 @@ extractor = Extractor(
 )
 
 lora_settings = LoraSettings(
-    lora_r=32,
-    lora_alpha=64,
+    lora_r=64,
+    lora_alpha=32,
     lora_dropout=0.01,
     num_epochs=10,
     learning_rate=4e-4,
