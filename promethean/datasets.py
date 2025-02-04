@@ -32,7 +32,7 @@ def hub_prompts(name: str, split: str | HubSplit, text_field: str):
     def items():
         count = 0
         for example in ds:
-            yield example[split.dataset.text_field]
+            yield example[text_field]
             count += 1
             if (max_rows is not None) and count >= max_rows:
                 break

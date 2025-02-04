@@ -55,10 +55,16 @@ async def make_request(session, url: str, headers: dict[str, str], payload, retr
             async with session.post(url, headers=headers, json=payload) as response:
                 result = await response.json()
                 message = result['choices'][0]['message']
-                return {
-                    "input": payload["messages"][0]["content"],
-                    "output": message["content"]
-                }
+                return [
+                    {
+                        "role": "user",
+                        "content": payload["messages"][0]["content"],
+                    },
+                    {
+                        "role": "assistant",
+                        "content": message["content"]
+                    },
+                ]
         except Exception as e:
             if attempt == retries - 1:
                 print(f"Failed after {retries} attempts: {e}")
