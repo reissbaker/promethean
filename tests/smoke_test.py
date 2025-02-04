@@ -1,12 +1,12 @@
-from promethean.datasets import HubPrompts, HubSplit, Dataset
+from promethean.datasets import hub_prompts, HubSplit, Dataset, Prompts
 from promethean.extract import Extractor, ClientOpts
 from promethean.lora import LoraSettings
 import os
 
-output_dir="output"
+output_dir = "output"
 extractor = Extractor(
-    teacher="hf:meta-llama/Meta-Llama-3.1-8B-Instruct",
-    request_batch_size=8,
+    teacher="hf:meta-llama/Llama-3.1-70B-Instruct",
+    max_concurrent=8,
     output_dir=output_dir,
     client_opts=ClientOpts(
         base_url="https://glhf.chat/api/openai/v1",
@@ -14,17 +14,17 @@ extractor = Extractor(
     ),
     dataset=Dataset(
         train=[
-            HubPrompts(
+            hub_prompts(
                 name="mlabonne/harmless_alpaca",
                 text_field="text",
-                splits=[HubSplit(name="train", max_rows=100)],
+                split=HubSplit(name="train", max_rows=100),
             ),
         ],
         eval=[
-            HubPrompts(
+            hub_prompts(
                 name="mlabonne/harmless_alpaca",
                 text_field="text",
-                splits=[HubSplit(name="test", max_rows=20)],
+                split=HubSplit(name="test", max_rows=20),
             ),
         ],
     ),
@@ -46,4 +46,5 @@ def extract():
 def gen_axolotl():
     axolotl_config.save(output_dir)
 
+extract()
 gen_axolotl()
