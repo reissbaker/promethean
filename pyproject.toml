@@ -3,7 +3,7 @@ name = "promethean"
 version = "0.0.1"
 description = "Extract datasets from models and train LoRAs on them"
 authors = [
-    {name = "Matt Baker",email = "matthew.reiss.baker@gmail.com"}
+    {name = "@reissbaker",}
 ]
 readme = "README.md"
 requires-python = ">=3.13"
