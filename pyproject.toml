@@ -1,7 +1,7 @@
 [project]
 name = "promethean"
-version = "0.1.0"
-description = ""
+version = "0.0.1"
+description = "Extract datasets from models and train LoRAs on them"
 authors = [
     {name = "Matt Baker",email = "matthew.reiss.baker@gmail.com"}
 ]
