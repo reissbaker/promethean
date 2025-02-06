@@ -1,7 +1,7 @@
 [project]
-name = "promethean"
+name = "unfat"
 version = "0.0.1"
-description = "Extract datasets from models and train LoRAs on them"
+description = "Extract datasets from models and train slimmer LoRAs on them"
 authors = [
     {name = "@reissbaker"}
 ]

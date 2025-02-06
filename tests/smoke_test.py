@@ -1,6 +1,6 @@
-from promethean.datasets import hub_prompts, HubSplit, Dataset, Prompts
-from promethean.extract import Extractor, ClientOpts
-from promethean.lora import LoraSettings
+from unfat.datasets import hub_prompts, HubSplit, Dataset, Prompts
+from unfat.extract import Extractor, ClientOpts
+from unfat.lora import LoraSettings
 import os
 
 output_dir = "output"
