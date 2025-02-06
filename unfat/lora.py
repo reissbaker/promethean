@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Sequence
-import promethean.axolotl as axolotl
+import unfat.axolotl as axolotl
 from .datasets import Dataset, Convos
 
 @dataclass
