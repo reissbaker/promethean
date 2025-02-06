@@ -1,23 +1,15 @@
-```
-█ ▄▄  █▄▄▄▄ ████▄ █▀▄▀█ ▄███▄     ▄▄▄▄▀ ▄  █ ▄███▄   ██      ▄
-█   █ █  ▄▀ █   █ █ █ █ █▀   ▀ ▀▀▀ █   █   █ █▀   ▀  █ █      █
-█▀▀▀  █▀▀▌  █   █ █ ▄ █ ██▄▄       █   ██▀▀█ ██▄▄    █▄▄█ ██   █
-█     █  █  ▀████ █   █ █▄   ▄▀   █    █   █ █▄   ▄▀ █  █ █ █  █
- █      █            █  ▀███▀    ▀        █  ▀███▀      █ █  █ █
-  ▀    ▀            ▀                    ▀             █  █   ██
-                                                      ▀
-```
+![unfat](./unfat.png)
 
 Easily extract prompt/completion datasets from models and generate Axolotl
-configs to auto-distill LoRAs from them.
+configs to auto-distill smaller, slimmer LoRAs from the original models.
 
 
 ## Example
 
 ```python
-from promethean.datasets import hub_prompts, HubSplit, Dataset, Prompts
-from promethean.extract import Extractor, ClientOpts
-from promethean.lora import LoraSettings
+from unfat.datasets import hub_prompts, HubSplit, Dataset, Prompts
+from unfat.extract import Extractor, ClientOpts
+from unfat.lora import LoraSettings
 import os
 
 output_dir = "output"
