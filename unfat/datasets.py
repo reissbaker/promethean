@@ -16,10 +16,59 @@ class HubSplit:
     max_rows: int | None = None
 
 @dataclass
+class HubSubset:
+    name: str
+    split: str | HubSplit
+
+@dataclass
 class Prompts:
     output_path: str
     count: Callable[[], int]
     items: Callable[[], Iterator[str]]
+
+def get_split_name(split: str | HubSplit):
+    if isinstance(split, HubSplit):
+        return split.name
+    return split
+
+def hub_subsets(name: str, subsets: Sequence[HubSubset], text_field: str):
+    datasets = [
+        load_dataset(
+            name,
+            split=get_split_name(subset.split),
+            data_dir=subset.name
+        ) for subset in subsets
+    ]
+    def count():
+        rows = 0
+        for i in range(len(datasets)):
+            if isinstance(subsets[i].split, HubSplit):
+                if subsets[i].split.max_rows:
+                    rows += subsets[i].split.max_rows
+                    continue
+            rows += len(datasets[i])
+        return rows
+    def items():
+        for i in range(len(datasets)):
+            dataset = datasets[i]
+            subset = subsets[i]
+            count = 0
+            max_rows = subset.split.max_rows if isinstance(subset.split, HubSplit) else None
+            for example in dataset:
+                yield example[text_field]
+                if (max_rows is not None) and count >= max_rows:
+                    break
+
+    output_path = f"hub/{name}"
+    for subset in subsets:
+        split_name = get_split_name(subset.split)
+        output_path = f"{output_path}-{subset.name}-{split_name}"
+
+    return Prompts(
+        output_path=f"{output_path}.jsonl",
+        count=count,
+        items=items,
+    )
 
 def hub_prompts(name: str, split: str | HubSplit, text_field: str):
     split_name = split.name if isinstance(split, HubSplit) else split
