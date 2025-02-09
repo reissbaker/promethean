@@ -58,9 +58,28 @@ async def make_request(
 ):
     for attempt in range(retries):
         try:
+            payload["stream"] = True
             async with session.post(url, headers=headers, json=payload) as response:
-                result = await response.json()
-                message = result['choices'][0]['message']
+                content = ""
+                async for line in response.content:
+                    line = line.decode('utf-8').strip()
+                    if line:
+                        # SSE format starts with "data: "
+                        if line.startswith('data: '):
+                            if line == 'data: [DONE]':
+                                break
+                            try:
+                                json_data = json.loads(line[6:])
+                                if (
+                                    'choices' in json_data
+                                    and json_data['choices']
+                                    and 'delta' in json_data['choices'][0]
+                                    and 'content' in json_data['choices'][0]['delta']
+                                ):
+                                    content += json_data['choices'][0]['delta']['content']
+                            except json.JSONDecodeError:
+                                continue
+
                 return [
                     {
                         "role": "user",
@@ -68,7 +87,7 @@ async def make_request(
                     },
                     {
                         "role": "assistant",
-                        "content": message["content"]
+                        "content": content
                     },
                 ]
         except Exception as e:
