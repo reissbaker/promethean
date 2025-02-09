@@ -16,6 +16,7 @@ from .datasets import HubSplit, JsonlConvos, Dataset, Prompts, Convos
 class ClientOpts:
     base_url: str
     api_key: str
+    retries: int = 3
 
 @dataclass
 class Extractor:
@@ -49,7 +50,12 @@ def get_jsonl_convos(output_dir: str, datasets: Sequence[Prompts]):
         ))
     return output_convos
 
-async def make_request(session, url: str, headers: dict[str, str], payload, retries: int):
+async def make_request(
+    session, url: str,
+    headers: dict[str, str],
+    payload,
+    retries: int,
+):
     for attempt in range(retries):
         try:
             async with session.post(url, headers=headers, json=payload) as response:
@@ -138,7 +144,7 @@ async def process_prompts(
                         "model": teacher,
                         "messages": [{"role": "user", "content": prompt}],
                     },
-                    retries=3
+                    retries=client_opts.retries,
                 )
 
             async for result in stream_with_concurrency(
