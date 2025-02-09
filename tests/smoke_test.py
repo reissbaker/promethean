@@ -17,14 +17,14 @@ extractor = Extractor(
             hub_prompts(
                 name="mlabonne/harmless_alpaca",
                 text_field="text",
-                split=HubSplit(name="train"),
+                split=HubSplit(name="train", max_rows=30),
             ),
         ],
         eval=[
             hub_prompts(
                 name="mlabonne/harmless_alpaca",
                 text_field="text",
-                split=HubSplit(name="test"),
+                split=HubSplit(name="test", max_rows=10),
             ),
         ],
     ),
