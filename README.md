@@ -158,5 +158,6 @@ uvx modal setup
 Then run Axolotl, making sure to use Python 3.11:
 
 ```bash
+cd output
 uvx --python 3.11 axolotl train ./output/axolotl.yaml --cloud ./output/cloud_config.yaml
 ```
