@@ -68,6 +68,7 @@ class LoraSettings:
             evals_per_epoch=self.evals_per_epoch,
             weight_decay=self.weight_decay,
             fsdp_config=None,
+            wandb_project=self.wandb_project,
         )
         return axolotl.TrainingConfig(
             axolotl_config=config.generate(dataset),
