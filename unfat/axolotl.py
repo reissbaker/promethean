@@ -2,7 +2,7 @@ from typing import Sequence, TypedDict
 from dataclasses import dataclass, field, asdict, replace
 import yaml
 import os
-from .datasets import Dataset, Convos, HubConvos, JsonlConvos
+from .datasets import Dataset, Convos, HubConvos, JsonlConvos, Literal
 
 @dataclass
 class AxolotlJsonlConvos:
@@ -22,7 +22,7 @@ class FsdpConf(TypedDict):
     fsdp_state_dict_type: str
     fsdp_sharding_strategy: str
 
-def default_fsdp_conf() -> FsdpConf:
+def generate_fsdp_conf(layer_to_wrap: str) -> FsdpConf:
     return {
         "fsdp_limit_all_gathers": True,
         "fsdp_sync_module_states": True,
@@ -30,13 +30,13 @@ def default_fsdp_conf() -> FsdpConf:
         "fsdp_use_orig_params": False,
         "fsdp_cpu_ram_efficient_loading": True,
         "fsdp_auto_wrap_policy": "TRANSFORMER_BASED_WRAP",
-        "fsdp_transformer_layer_cls_to_wrap": "LlamaDecoderLayer",
+        "fsdp_transformer_layer_cls_to_wrap": layer_to_wrap,
         "fsdp_state_dict_type": "FULL_STATE_DICT",
         "fsdp_sharding_strategy": "FULL_SHARD",
     }
 
 @dataclass
-class Config:
+class BaseConfig:
     base_model: str
     lora_r: int
     lora_alpha: int
@@ -48,6 +48,12 @@ class Config:
     warmup_steps: int
     evals_per_epoch: int
     weight_decay: float
+    model_type: str
+    fsdp_config: FsdpConf | None
+
+@dataclass
+class Config(BaseConfig):
+    wandb_project: str | None = None
 
     def generate(self, dataset: Dataset[Convos]):
         eval = dataset.eval if dataset.eval else []
@@ -55,6 +61,7 @@ class Config:
             base_model=self.base_model,
             datasets=[convert_dataset(ds) for ds in dataset.train],
             test_datasets=[convert_dataset(ds) for ds in eval],
+            model_type=self.model_type,
             lora_r=self.lora_r,
             lora_alpha=self.lora_alpha,
             lora_dropout=self.lora_dropout,
@@ -65,6 +72,8 @@ class Config:
             warmup_steps=self.warmup_steps,
             evals_per_epoch=self.evals_per_epoch,
             weight_decay=self.weight_decay,
+            fsdp_config=self.fsdp_config,
+            wandb_project=self.wandb_project,
         )
 
 def convert_dataset(dataset: HubConvos | JsonlConvos):
@@ -74,12 +83,12 @@ def convert_dataset(dataset: HubConvos | JsonlConvos):
         return AxolotlJsonlConvos(path=dataset.path)
 
 @dataclass
-class FullConfig(Config):
+class FullConfig(BaseConfig):
     datasets: Sequence[AxolotlJsonlConvos | HubConvos]
     test_datasets: Sequence[AxolotlJsonlConvos | HubConvos]
+    model_type: str
+    wandb_project: str | None
 
-    # optionally might have model_type or tokenizer_type
-    model_type: str = "LlamaForCausalLM"
     tokenizer_type: str = "AutoTokenizer"
 
     load_in_8bit: bool = False
@@ -91,7 +100,8 @@ class FullConfig(Config):
     adapter: str = "lora"
 
     sequence_len: int = 8192
-    sample_packing: bool = False
+    sample_packing: bool = True
+    eval_sample_packing: bool = True
     pad_to_sequence_len: bool = True
 
     lora_target_linear: bool = True
@@ -116,7 +126,6 @@ class FullConfig(Config):
         "full_shard",
         "auto_wrap",
     ])
-    fsdp_config: FsdpConf = field(default_factory=default_fsdp_conf)
     special_tokens: dict[str, str] = field(default_factory=lambda: {
         "pad_token": "<|end_of_text|>"
     })
@@ -137,3 +146,33 @@ def rewrite_ds_paths(output_dir: str, convos: AxolotlJsonlConvos | HubConvos):
         return
 
     convos.path = "./" + os.path.relpath(convos.path, output_dir)
+
+@dataclass
+class CloudConfig:
+    provider: Literal["modal"]
+    gpu: Literal["l40s"] | Literal["a100"] | Literal["h100"]
+    gpu_count: int
+    timeout: int
+    env: Sequence[str] = field(default_factory=lambda: [
+        "WANDB_API_KEY",
+        "HF_TOKEN",
+    ])
+
+    volumes: Sequence[dict] = field(default_factory=lambda: [
+        {"name": "axolotl-cache", "mount": "/workspace/cache"},
+    ])
+
+    def save(self, output_dir: str):
+        path = os.path.join(output_dir, "cloud_config.yaml")
+        with open(path, "w") as f:
+            f.write(yaml.dump(asdict(self), default_flow_style=False))
+
+@dataclass
+class TrainingConfig:
+    axolotl_config: FullConfig
+    cloud_config: CloudConfig | None
+
+    def save(self, output_dir: str):
+        self.axolotl_config.save(output_dir)
+        if self.cloud_config:
+            self.cloud_config.save(output_dir)

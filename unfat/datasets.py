@@ -56,6 +56,7 @@ def hub_subsets(name: str, subsets: Sequence[HubSubset], text_field: str):
             max_rows = subset.split.max_rows if isinstance(subset.split, HubSplit) else None
             for example in dataset:
                 yield example[text_field]
+                count += 1
                 if (max_rows is not None) and count >= max_rows:
                     break
 
