@@ -74,6 +74,10 @@ class Config(BaseConfig):
             weight_decay=self.weight_decay,
             fsdp_config=self.fsdp_config,
             wandb_project=self.wandb_project,
+            fsdp=None if not self.fsdp_config else [
+                "full_shard",
+                "auto_wrap",
+            ],
         )
 
 def convert_dataset(dataset: HubConvos | JsonlConvos):
@@ -88,6 +92,8 @@ class FullConfig(BaseConfig):
     test_datasets: Sequence[AxolotlJsonlConvos | HubConvos]
     model_type: str
     wandb_project: str | None
+    fsdp: Sequence[str] | None
+    output_dir: str = "/workspace/training-output"
 
     tokenizer_type: str = "AutoTokenizer"
 
@@ -122,10 +128,6 @@ class FullConfig(BaseConfig):
     flash_attention: bool = True
 
     saves_per_epoch: int = 1
-    fsdp: Sequence[str] = field(default_factory=lambda: [
-        "full_shard",
-        "auto_wrap",
-    ])
     special_tokens: dict[str, str] = field(default_factory=lambda: {
         "pad_token": "<|end_of_text|>"
     })
