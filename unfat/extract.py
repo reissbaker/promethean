@@ -195,7 +195,7 @@ async def generate_for_datasets(config: Extractor, datasets: Sequence[Prompts]):
                 teacher=config.teacher,
                 client_opts=config.client_opts,
             ):
-                f.write(json.dumps({ "conversations": dialog }))
+                f.write(json.dumps({ "messages": dialog }))
                 f.write("\n")
     return output_convos
 

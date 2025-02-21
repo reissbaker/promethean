@@ -139,7 +139,7 @@ class FullConfig(BaseConfig):
         for convos in clone.test_datasets:
             rewrite_ds_paths(output_dir, convos)
         file_contents = yaml.dump(asdict(clone), default_flow_style=False)
-        path = os.path.join(output_dir, "axolotl.yaml")
+        path = os.path.join(output_dir, "config.yaml")
         with open(path, "w") as f:
             f.write(file_contents)
 
@@ -162,6 +162,8 @@ class CloudConfig:
 
     volumes: Sequence[dict] = field(default_factory=lambda: [
         {"name": "axolotl-cache", "mount": "/workspace/cache"},
+        {"name": "axolotl-data", "mount": "/workspace/data"},
+        {"name": "axolotl-out", "mount": "/workspace/training-output"},
     ])
 
     def save(self, output_dir: str):
