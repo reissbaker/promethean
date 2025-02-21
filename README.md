@@ -129,7 +129,7 @@ lora_settings = LoraSettings(
     lora_r=32,
     lora_alpha=16,
     lora_dropout=0.01,
-    num_epochs=2,
+    num_epochs=8,
     learning_rate=4e-4,
     warmup_steps=10,
 )
