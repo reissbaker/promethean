@@ -1,11 +1,11 @@
 ![unfat](./unfat.png)
 
-Easily extract prompt/completion datasets from models and generate Axolotl
-configs to auto-distill smaller, slimmer LoRAs from the original models.
-Automates training Llama 3.1-based LoRAs with known-good configs for up to 8192
-tokens, so you don't have to think about VRAM, batch sizes, gradient
-accumulation steps, or any of the system-level details of model training and
-can focus on curating good datasets and selecting training parameters.
+Easily extract prompt/completion datasets from models and auto-distill smaller,
+slimmer LoRAs from the original models. Automates training Llama 3.1-based
+LoRAs with known-good configs for up to 8192 tokens, so you don't have to think
+about VRAM, batch sizes, gradient accumulation steps, or any of the
+system-level details of model training and can focus on curating good datasets
+and selecting training parameters.
 
 ## Example
 
@@ -138,7 +138,6 @@ lora_settings = LoraSettings(
 train_config = llama_8b_axolotl(
     dataset=extractor.output_dataset(),
     settings=lora_settings,
-    cloud=LoraCloudTrainer(provider="modal", timeout=86400),
     warmup_steps=10,
 )
 
