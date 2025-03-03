@@ -45,14 +45,6 @@ extractor = Extractor(
                 text_field="problem",
                 subsets=[
                     HubSubset(
-                        name="algebra",
-                        split=HubSplit(name="train",max_rows=30),
-                    ),
-                    HubSubset(
-                        name="counting_and_probability",
-                        split=HubSplit(name="train", max_rows=30),
-                    ),
-                    HubSubset(
                         name="geometry",
                         split=HubSplit(name="train", max_rows=30),
                     ),
@@ -63,10 +55,6 @@ extractor = Extractor(
                     HubSubset(
                         name="number_theory",
                         split=HubSplit(name="train", max_rows=30),
-                    ),
-                    HubSubset(
-                        name="prealgebra",
-                        split=HubSplit("train", max_rows=30),
                     ),
                     HubSubset(
                         name="precalculus",
@@ -87,14 +75,6 @@ extractor = Extractor(
                 text_field="problem",
                 subsets=[
                     HubSubset(
-                        name="algebra",
-                        split=HubSplit(name="test",max_rows=30),
-                    ),
-                    HubSubset(
-                        name="counting_and_probability",
-                        split=HubSplit(name="test", max_rows=30),
-                    ),
-                    HubSubset(
                         name="geometry",
                         split=HubSplit(name="test", max_rows=30),
                     ),
@@ -105,10 +85,6 @@ extractor = Extractor(
                     HubSubset(
                         name="number_theory",
                         split=HubSplit(name="test", max_rows=30),
-                    ),
-                    HubSubset(
-                        name="prealgebra",
-                        split=HubSplit("test", max_rows=30),
                     ),
                     HubSubset(
                         name="precalculus",
