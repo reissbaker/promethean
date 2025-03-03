@@ -128,9 +128,60 @@ around $10 in API credits:
 extractor.run()
 ```
 
-Once this finishes, we should have all the configuration and data needed in our
-`output/` dir. Now, let's upload the files to Together's fine-tuning platform
-and run a job. This should take around 10mins and cost around $6 in credits:
+Now you should have all the data you need for training. Unfat can generate
+training jobs for you in two ways:
+
+1. By generating Axolotl configs you can run on A100s/H100s, or
+2. By creating jobs on Together.ai's fine-tuning platform.
+
+If you have your own A100/H100 GPUs, we recommend using Axolotl. Otherwise, we
+recommend running the jobs on Together.ai for simplicity.
+
+## Finetune using Axolotl
+
+[Axolotl](https://github.com/axolotl-ai-cloud/axolotl) is an open-source
+fine-tuning framework. Unfat can automatically generate Axolotl training
+configs for you by making some assumptions:
+
+* For Llama 3.1 8B finetunes, we assume on H100/A100 GPU is being used.
+* For Llama 3.1 70B finetunes, we assume 8xH100s or 8xA100s.
+
+If you don't have machines of this size yourself, we recommend using
+[Runpod](https://www.runpod.io/) to rent them.
+
+To generate the configs:
+
+```python
+lora_settings = LoraSettings(
+    rank=32,
+    alpha=16,
+    dropout=0.01,
+    num_epochs=8,
+    learning_rate=4e-4,
+)
+train_config = llama_8b_axolotl(
+    dataset=extractor.output_dataset(),
+    settings=lora_settings,
+    cloud=LoraCloudTrainer(provider="modal", timeout=86400),
+    warmup_steps=10,
+)
+
+train_config.save(output_dir)
+```
+
+Now you should have a `config.yaml` in your `output/` directory. Once you've
+installed and setup Axolotl according to its setup guide, simply run:
+
+```bash
+axolotl train ./output/config.yaml
+```
+
+## Finetune using Together.ai
+
+If you don't want to manage GPUs yourself, Unfat supports automatically
+uploading and starting jobs on Together.ai's finetuning platform. First,
+create an account and export a `TOGETHER_API_KEY` in your shell environment.
+Then you can simply do as follows:
 
 ```python
 train_config = llama_8b_together(
@@ -148,3 +199,5 @@ train_config = llama_8b_together(
 uploaded_files = together_config.upload_files()
 together_config.finetune(uploaded_files)
 ```
+
+This should take around 10mins and cost around $6 in credits:
