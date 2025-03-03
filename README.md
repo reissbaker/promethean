@@ -119,7 +119,7 @@ recommend running the jobs on Together.ai for simplicity.
 fine-tuning framework. Unfat can automatically generate Axolotl training
 configs for you by making some assumptions:
 
-* For Llama 3.1 8B finetunes, we assume on H100/A100 GPU is being used.
+* For Llama 3.1 8B finetunes, we assume one H100/A100 GPU is being used.
 * For Llama 3.1 70B finetunes, we assume 8xH100s or 8xA100s.
 
 If you don't have machines of this size yourself, we recommend using
