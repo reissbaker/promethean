@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import TypedDict, Sequence, Literal, TypeVar, Generic, Iterator
 from collections.abc import Callable
 import json
+import os
 
 T = TypeVar("T")
 @dataclass
@@ -119,3 +120,12 @@ class HubConvos:
     splits: Sequence[str | HubSplit]
 
 Convos = JsonlConvos | HubConvos
+
+def convo_paths(output_dir: str, convos: Sequence[Convos]):
+    for convo in convos:
+        if isinstance(convo, HubConvos):
+            for split in convo.splits:
+                split_name = split.name if isinstance(split, HubSplit) else split
+                yield os.path.join(output_dir, f"hub/{convo.name}-{split_name}.jsonl")
+        else:
+            yield convo.path

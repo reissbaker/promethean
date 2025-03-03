@@ -17,6 +17,7 @@ First, we'll get some datasets and extract completions from R1 by querying the
 from unfat.datasets import hub_prompts, hub_subsets, HubSplit, Dataset, HubSubset
 from unfat.extract import Extractor, ClientOpts
 from unfat.lora import LoraSettings, LoraCloudTrainer
+from unfat.together import llama_8b_together
 import os
 
 output_dir = "output"
@@ -120,28 +121,7 @@ extractor = Extractor(
 )
 ```
 
-Then, let's set some basic hyperparameters for training, and generate an
-Axolotl config targeting Llama 3.1 8B Instruct, running on Modal's serverless
-training platform:
-
-```python
-lora_settings = LoraSettings(
-    lora_r=32,
-    lora_alpha=16,
-    lora_dropout=0.01,
-    num_epochs=8,
-    learning_rate=4e-4,
-    warmup_steps=10,
-)
-train_config = lora_settings.llama_8b_axolotl(
-    dataset=extractor.output_dataset(),
-    cloud=LoraCloudTrainer(provider="modal", timeout=86400)
-)
-
-train_config.save(output_dir)
-```
-
-Finally, we'll run the extraction. This should take around 15mins and cost
+Next, let's run the extraction. This should take around 15mins and cost
 around $10 in API credits:
 
 ```python
@@ -149,15 +129,22 @@ extractor.run()
 ```
 
 Once this finishes, we should have all the configuration and data needed in our
-`output/` dir. To run this on Modal, make sure you have Modal set up:
+`output/` dir. Now, let's upload the files to Together's fine-tuning platform
+and run a job. This should take around 10mins and cost around $6 in credits:
 
-```bash
-uvx modal setup
-```
-
-Then run Axolotl, making sure to use Python 3.11:
-
-```bash
-cd output
-uvx --python 3.11 axolotl train ./output/axolotl.yaml --cloud ./output/cloud_config.yaml
+```python
+train_config = llama_8b_together(
+    output_dir=output_dir,
+    dataset=extractor.output_dataset(),
+    settings=LoraSettings(
+        rank=32,
+        alpha=16,
+        dropout=0.01,
+        num_epochs=8,
+        learning_rate=4e-4,
+    ),
+    api_key=os.environ["TOGETHER_API_KEY"],
+)
+uploaded_files = together_config.upload_files()
+together_config.finetune(uploaded_files)
 ```

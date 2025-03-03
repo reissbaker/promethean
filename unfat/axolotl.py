@@ -3,6 +3,7 @@ from dataclasses import dataclass, field, asdict, replace
 import yaml
 import os
 from .datasets import Dataset, Convos, HubConvos, JsonlConvos, Literal
+from .lora import LoraSettings
 
 @dataclass
 class AxolotlJsonlConvos:
@@ -50,6 +51,7 @@ class BaseConfig:
     weight_decay: float
     model_type: str
     fsdp_config: FsdpConf | None
+    warmup_steps: int
 
 @dataclass
 class Config(BaseConfig):
@@ -180,3 +182,72 @@ class TrainingConfig:
         self.axolotl_config.save(output_dir)
         if self.cloud_config:
             self.cloud_config.save(output_dir)
+
+@dataclass
+class LoraCloudTrainer:
+    provider: Literal["modal"]
+    timeout: int
+
+def llama_70b_axolotl(
+    dataset: Dataset[Convos],
+    settings: LoraSettings,
+    cloud: LoraCloudTrainer | None = None,
+    warmup_steps=10,
+):
+    config = Config(
+        base_model="unsloth/Meta-Llama-3.1-70B-Instruct",
+        model_type="LlamaForCausalLM",
+        lora_r=settings.rank,
+        lora_alpha=settings.alpha,
+        lora_dropout=settings.dropout,
+        gradient_accumulation_steps=16,
+        micro_batch_size=1,
+        num_epochs=settings.num_epochs,
+        learning_rate=settings.learning_rate,
+        warmup_steps=warmup_steps,
+        evals_per_epoch=settings.evals_per_epoch,
+        weight_decay=settings.weight_decay,
+        fsdp_config=generate_fsdp_conf("LlamaDecoderLayer"),
+        wandb_project=settings.wandb_project,
+    )
+    return TrainingConfig(
+        axolotl_config=config.generate(dataset),
+        cloud_config=None if not cloud else CloudConfig(
+            provider=cloud.provider,
+            gpu="h100",
+            gpu_count=8,
+            timeout=cloud.timeout,
+        ),
+    )
+
+def llama_8b_axolotl(
+    dataset: Dataset[Convos],
+    settings: LoraSettings,
+    cloud: LoraCloudTrainer | None = None,
+    warmup_steps: int = 10,
+):
+    config = Config(
+        base_model="unsloth/Meta-Llama-3.1-8B-Instruct",
+        model_type="LlamaForCausalLM",
+        lora_r=settings.rank,
+        lora_alpha=settings.alpha,
+        lora_dropout=settings.dropout,
+        gradient_accumulation_steps=4,
+        micro_batch_size=4,
+        num_epochs=settings.num_epochs,
+        learning_rate=settings.learning_rate,
+        warmup_steps=warmup_steps,
+        evals_per_epoch=settings.evals_per_epoch,
+        weight_decay=settings.weight_decay,
+        fsdp_config=None,
+        wandb_project=settings.wandb_project,
+    )
+    return TrainingConfig(
+        axolotl_config=config.generate(dataset),
+        cloud_config=None if not cloud else CloudConfig(
+            provider=cloud.provider,
+            gpu="h100",
+            gpu_count=1,
+            timeout=cloud.timeout,
+        ),
+    )
