@@ -1,16 +1,14 @@
 import tqdm
-from getpass import getpass
 import json
 import asyncio
 import aiohttp
-from itertools import islice
 from typing import (
     List, TypeVar, Iterator, Sequence, AsyncIterator, Coroutine, Any
 )
 from collections.abc import Callable
 import os
 from dataclasses import dataclass
-from .datasets import HubSplit, JsonlConvos, Dataset, Prompts, Convos
+from .datasets import JsonlConvos, Dataset, Prompts, Convos
 
 @dataclass
 class ClientOpts:
@@ -30,7 +28,7 @@ class Extractor:
         coro = generate_async(self)
         try:
             loop = asyncio.get_running_loop()
-            future = loop.run_corouting_threadsafe(coro)
+            future = asyncio.run_coroutine_threadsafe(coro, loop)
             return future.result()
         except RuntimeError:
             # No running event loop, create one
@@ -38,15 +36,15 @@ class Extractor:
 
     def output_dataset(self) -> Dataset[Convos]:
         return Dataset(
-            train=get_jsonl_convos(self.output_dir, self.dataset.train),
-            eval=get_jsonl_convos(self.output_dir, (self.dataset.eval or [])),
+            train=get_jsonl_convos(self.dataset.train),
+            eval=get_jsonl_convos(self.dataset.eval or []),
         )
 
-def get_jsonl_convos(output_dir: str, datasets: Sequence[Prompts]):
+def get_jsonl_convos(datasets: Sequence[Prompts]):
     output_convos: List[JsonlConvos] = []
     for prompts in datasets:
         output_convos.append(JsonlConvos(
-            path=os.path.join(output_dir, prompts.output_path)
+            path=prompts.output_path
         ))
     return output_convos
 
@@ -184,7 +182,7 @@ async def generate_for_datasets(config: Extractor, datasets: Sequence[Prompts]):
             config.output_dir,
             prompts.output_path,
         )
-        output_convos.append(JsonlConvos(path=output_path))
+        output_convos.append(JsonlConvos(path=prompts.output_path))
         output_dir = os.path.dirname(output_path)
         os.makedirs(output_dir, exist_ok=True)
 

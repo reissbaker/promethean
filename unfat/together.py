@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import os
 from typing import Literal
-from .datasets import Dataset, Convos, HubConvos, JsonlConvos, convo_paths
+from .datasets import Dataset, Convos, convo_paths
 from .lora import LoraSettings
 from together import Together
 
@@ -26,8 +26,8 @@ class TogetherConfig:
 
         train_path = os.path.join(self.output_dir, "together-train.jsonl")
         with open(train_path, "w") as f:
-            for path in convo_paths(self.output_dir, self.dataset.train):
-                with open(path, "r") as fr:
+            for path in convo_paths(self.dataset.train):
+                with open(os.path.join(self.output_dir, path), "r") as fr:
                     for line in fr:
                         f.write(line)
         train_file_id = client.files.upload(file=train_path).id
@@ -36,8 +36,8 @@ class TogetherConfig:
         if self.dataset.eval is not None:
             eval_path = os.path.join(self.output_dir, "together-eval.jsonl")
             with open(eval_path, "w") as f:
-                for path in convo_paths(self.output_dir, self.dataset.eval):
-                    with open(path, "r") as fr:
+                for path in convo_paths(self.dataset.eval):
+                    with open(os.path.join(self.output_dir, path), "r") as fr:
                         for line in fr:
                             f.write(line)
             eval_file_id = client.files.upload(file=eval_path).id

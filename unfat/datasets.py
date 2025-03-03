@@ -1,6 +1,6 @@
-from datasets import load_dataset
+from datasets import load_dataset, Dataset as HfDataset
 from dataclasses import dataclass
-from typing import TypedDict, Sequence, Literal, TypeVar, Generic, Iterator
+from typing import Sequence, TypeVar, Generic, Iterator, cast, Dict
 from collections.abc import Callable
 import json
 import os
@@ -34,21 +34,23 @@ def get_split_name(split: str | HubSplit):
 
 def hub_subsets(name: str, subsets: Sequence[HubSubset], text_field: str):
     datasets = [
-        load_dataset(
+        cast(HfDataset, load_dataset(
             name,
             split=get_split_name(subset.split),
             data_dir=subset.name
-        ) for subset in subsets
+        )) for subset in subsets
     ]
     def count():
         rows = 0
         for i in range(len(datasets)):
-            if isinstance(subsets[i].split, HubSplit):
-                if subsets[i].split.max_rows:
-                    rows += subsets[i].split.max_rows
+            curr_split = subsets[i].split
+            if isinstance(curr_split, HubSplit):
+                if curr_split.max_rows:
+                    rows += curr_split.max_rows
                     continue
             rows += len(datasets[i])
         return rows
+
     def items():
         for i in range(len(datasets)):
             dataset = datasets[i]
@@ -56,7 +58,8 @@ def hub_subsets(name: str, subsets: Sequence[HubSubset], text_field: str):
             count = 0
             max_rows = subset.split.max_rows if isinstance(subset.split, HubSplit) else None
             for example in dataset:
-                yield example[text_field]
+                row = cast(Dict[str, str], example)
+                yield row[text_field]
                 count += 1
                 if (max_rows is not None) and count >= max_rows:
                     break
@@ -74,7 +77,7 @@ def hub_subsets(name: str, subsets: Sequence[HubSubset], text_field: str):
 
 def hub_prompts(name: str, split: str | HubSplit, text_field: str):
     split_name = split.name if isinstance(split, HubSplit) else split
-    ds = load_dataset(name, split=split_name)
+    ds = cast(HfDataset, load_dataset(name, split=split_name))
     max_rows = split.max_rows if isinstance(split, HubSplit) else None
 
     def count():
@@ -83,7 +86,8 @@ def hub_prompts(name: str, split: str | HubSplit, text_field: str):
     def items():
         count = 0
         for example in ds:
-            yield example[text_field]
+            row = cast(Dict[str, str], example)
+            yield row[text_field]
             count += 1
             if (max_rows is not None) and count >= max_rows:
                 break
@@ -98,11 +102,14 @@ def jsonl_prompts(path: str, name: str, text_field: str):
     def count():
         with open(path, 'r') as f:
             total_lines = sum(1 for _ in f)
+            return total_lines
+
     def items():
         with open(path, 'r') as f:
             for line in f:
                 data = json.loads(line.strip())
-                yield data[split.dataset.text_field]
+                yield data[text_field]
+
     return Prompts(
         output_path=f"jsonl/{name}.jsonl",
         count=count,
@@ -121,11 +128,11 @@ class HubConvos:
 
 Convos = JsonlConvos | HubConvos
 
-def convo_paths(output_dir: str, convos: Sequence[Convos]):
+def convo_paths(convos: Sequence[Convos]):
     for convo in convos:
         if isinstance(convo, HubConvos):
             for split in convo.splits:
                 split_name = split.name if isinstance(split, HubSplit) else split
-                yield os.path.join(output_dir, f"hub/{convo.name}-{split_name}.jsonl")
+                yield f"hub/{convo.name}-{split_name}.jsonl"
         else:
             yield convo.path

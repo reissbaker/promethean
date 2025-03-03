@@ -90,6 +90,7 @@ lora_settings = LoraSettings(
     wandb_project="r1-distill-8b-mini",
     wandb_api_key=os.environ["WANDB_API_KEY"],
 )
+
 train_config = llama_8b_axolotl(
     dataset=extractor.output_dataset(),
     settings=lora_settings,
@@ -97,7 +98,7 @@ train_config = llama_8b_axolotl(
     warmup_steps=10,
 )
 
-#extractor.run()
+extractor.run()
 train_config.save(output_dir)
 
 together_config = llama_8b_together(

@@ -1,8 +1,8 @@
-from typing import Sequence, TypedDict
+from typing import Sequence, TypedDict, Literal
 from dataclasses import dataclass, field, asdict, replace
 import yaml
 import os
-from .datasets import Dataset, Convos, HubConvos, JsonlConvos, Literal
+from .datasets import Dataset, Convos, HubConvos, JsonlConvos
 from .lora import LoraSettings
 
 @dataclass
@@ -51,7 +51,6 @@ class BaseConfig:
     weight_decay: float
     model_type: str
     fsdp_config: FsdpConf | None
-    warmup_steps: int
 
 @dataclass
 class Config(BaseConfig):
@@ -137,19 +136,19 @@ class FullConfig(BaseConfig):
     def save(self, output_dir: str):
         clone = replace(self)
         for convos in clone.datasets:
-            rewrite_ds_paths(output_dir, convos)
+            rewrite_ds_paths(convos)
         for convos in clone.test_datasets:
-            rewrite_ds_paths(output_dir, convos)
+            rewrite_ds_paths(convos)
         file_contents = yaml.dump(asdict(clone), default_flow_style=False)
         path = os.path.join(output_dir, "config.yaml")
         with open(path, "w") as f:
             f.write(file_contents)
 
-def rewrite_ds_paths(output_dir: str, convos: AxolotlJsonlConvos | HubConvos):
+def rewrite_ds_paths(convos: AxolotlJsonlConvos | HubConvos):
     if isinstance(convos, HubConvos):
         return
 
-    convos.path = "./" + os.path.relpath(convos.path, output_dir)
+    convos.path = "./" + convos.path
 
 @dataclass
 class CloudConfig:
