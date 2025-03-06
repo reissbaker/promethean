@@ -95,6 +95,15 @@ class TogetherConfig:
             wandb_api_key=self.lora_settings.wandb_api_key,
         )
 
+def role(convo: HubMessageConvos, role_value: str):
+    if role_value == convo.assistant_role:
+        return "assistant"
+    if role_value == convo.user_role:
+        return "user"
+    if role_value == convo.system_role:
+        return "system"
+    raise Exception(f"Unknown role {role_value}")
+
 def convo_lines(output_dir: str, convos: Sequence[Convos]):
     """Given a sequence of convos, yields the paths for each one"""
     for convo in convos:
@@ -111,7 +120,7 @@ def convo_lines(output_dir: str, convos: Sequence[Convos]):
                     converted = []
                     for message in input_messages:
                         converted.append({
-                            "role": message[convo.role_field],
+                            "role": role(convo, message[convo.role_field]),
                             "content": message[convo.content_field],
                         })
                     yield json.dumps({

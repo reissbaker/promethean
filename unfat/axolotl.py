@@ -89,11 +89,17 @@ class PropertyMappings(TypedDict):
     role: str
     content: str
 
+class RoleMapping(TypedDict):
+    user: list[str]
+    assistant: list[str]
+    system: list[str]
+
 @dataclass
 class AxolotlHubConvos:
     path: str
     field_messages: str
     message_property_mappings: PropertyMappings
+    roles: RoleMapping
     type: str = "chat_template"
     chat_template: str = "tokenizer_default"
 
@@ -185,6 +191,11 @@ def convert_dataset(dataset: HubMessageConvos | JsonlConvos | HubInstructConvos)
             message_property_mappings={
                 "role": dataset.role_field,
                 "content": dataset.content_field,
+            },
+            roles={
+                "user": [dataset.user_role, "user"],
+                "assistant": [dataset.assistant_role, "assistant"],
+                "system": [dataset.system_role, "system"],
             },
         )
     elif isinstance(dataset, HubInstructConvos):

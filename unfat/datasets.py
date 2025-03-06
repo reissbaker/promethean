@@ -148,6 +148,9 @@ class HubMessageConvos:
     messages_field: str = "messages"
     role_field: str = "role"
     content_field: str = "content"
+    assistant_role: str = "assistant"
+    user_role: str = "user"
+    system_role: str = "system"
 
 @dataclass
 class HubInstructConvos:
