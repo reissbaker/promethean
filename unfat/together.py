@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 import os
-from typing import Literal
-from .datasets import Dataset, Convos, convo_paths
+from typing import Literal, Sequence, cast, Any
+from .datasets import Dataset, Convos, HubMessageConvos, get_split_name, HubInstructConvos
 from .lora import LoraSettings
 from together import Together
+from datasets import load_dataset
+import json
 
 def llama_3_1_8b_together(
     dataset: Dataset[Convos],
@@ -58,20 +60,18 @@ class TogetherConfig:
 
         train_path = os.path.join(self.output_dir, "together-train.jsonl")
         with open(train_path, "w") as f:
-            for path in convo_paths(self.dataset.train):
-                with open(os.path.join(self.output_dir, path), "r") as fr:
-                    for line in fr:
-                        f.write(line)
+            for line in convo_lines(self.output_dir, self.dataset.train):
+                f.write(line)
+                f.write("\n")
         train_file_id = client.files.upload(file=train_path).id
         eval_file_id = None
 
         if self.dataset.eval is not None:
             eval_path = os.path.join(self.output_dir, "together-eval.jsonl")
             with open(eval_path, "w") as f:
-                for path in convo_paths(self.dataset.eval):
-                    with open(os.path.join(self.output_dir, path), "r") as fr:
-                        for line in fr:
-                            f.write(line)
+                for line in convo_lines(self.output_dir, self.dataset.eval):
+                    f.write(line)
+                    f.write("\n")
             eval_file_id = client.files.upload(file=eval_path).id
 
         return TogetherUploadData(train_file_id, eval_file_id)
@@ -94,3 +94,51 @@ class TogetherConfig:
             wandb_project_name=self.lora_settings.wandb_project,
             wandb_api_key=self.lora_settings.wandb_api_key,
         )
+
+def convo_lines(output_dir: str, convos: Sequence[Convos]):
+    """Given a sequence of convos, yields the paths for each one"""
+    for convo in convos:
+        if isinstance(convo, HubMessageConvos):
+            for split in convo.splits:
+                dataset = load_dataset(
+                    convo.name,
+                    split=get_split_name(split),
+                )
+                for row in dataset:
+                    input_messages = json.loads(
+                        cast(dict[Any, Any], row)[convo.messages_field]
+                    )
+                    converted = []
+                    for message in input_messages:
+                        converted.append({
+                            "role": message[convo.role_field],
+                            "content": message[convo.content_field],
+                        })
+                    yield json.dumps({
+                        "messages": converted,
+                    })
+
+        elif isinstance(convo, HubInstructConvos):
+            for split in convo.splits:
+                dataset = load_dataset(
+                    convo.name,
+                    split=get_split_name(split),
+                )
+                for row in dataset:
+                    converted = []
+                    casted = cast(dict[str, str], row)
+                    converted.append({
+                        "role": "user",
+                        "content": f"{casted[convo.instruction_field]}\n{casted[convo.input_field]}",
+                    })
+                    converted.append({
+                        "role": "assistant",
+                        "content": casted[convo.output_field]
+                    })
+                    yield json.dumps({
+                        "messages": converted,
+                    })
+        else:
+            with open(os.path.join(output_dir, convo.path)) as f:
+                for line in f:
+                    yield line.strip()

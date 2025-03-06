@@ -140,25 +140,26 @@ class JsonlConvos:
     path: str
 
 @dataclass
-class HubConvos:
-    """Trainable conversations in Hugging Face hub datasets"""
+class HubMessageConvos:
+    """Trainable conversations in Hugging Face hub datasets in conversational
+    formats"""
     name: str
-    type: str
     splits: Sequence[str | HubSplit]
+    messages_field: str = "messages"
+    role_field: str = "role"
+    content_field: str = "content"
 
-Convos = JsonlConvos | HubConvos
+@dataclass
+class HubInstructConvos:
+    """Trainable conversations in Hugging Face hub datasets in instructional
+    formats"""
+    name: str
+    splits: Sequence[str | HubSplit]
+    instruction_field: str = "instruction"
+    input_field: str = "input"
+    output_field: str = "output"
 
-# TODO this makes no sense, HubConvos don't have a path. You need to download
-# the hub convos and convert them to something useful for the Together trainer,
-# and this is unused for the Axolotl trainer
-def convo_paths(convos: Sequence[Convos]):
-    """Given a sequence of convos, yields the paths for each one"""
-    for convo in convos:
-        if isinstance(convo, HubConvos):
-            for split in convo.splits:
-                yield hub_split_path(name=convo.name, split=get_split_name(split))
-        else:
-            yield convo.path
+Convos = JsonlConvos | HubMessageConvos | HubInstructConvos
 
 def hub_split_path(name: str, split: str):
     return f"hub/{name}-{split}.jsonl"

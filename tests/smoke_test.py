@@ -1,4 +1,4 @@
-from unfat.datasets import hub_prompts, hub_subsets, HubSplit, Dataset, HubSubset
+from unfat.datasets import hub_prompts, hub_subsets, HubSplit, Dataset, HubSubset, HubInstructConvos
 from unfat.extract import Extractor
 from unfat.lora import LoraSettings
 from unfat.axolotl import llama_3_1_8b_axolotl, LoraCloudTrainer
@@ -92,8 +92,15 @@ lora_settings = LoraSettings(
     wandb_api_key=os.environ["WANDB_API_KEY"],
 )
 
+dataset = extractor.output_dataset().merge(Dataset(
+    train=[HubInstructConvos(
+        name="mhenrichsen/alpaca_2k_test",
+        splits=["train"],
+    )],
+))
+
 train_config = llama_3_1_8b_axolotl(
-    dataset=extractor.output_dataset(),
+    dataset=dataset,
     settings=lora_settings,
     cloud=LoraCloudTrainer(provider="modal", timeout=86400),
     warmup_steps=10,
@@ -103,7 +110,7 @@ extractor.run()
 train_config.save(output_dir)
 
 together_config = llama_3_1_8b_together(
-    dataset=extractor.output_dataset(),
+    dataset=dataset,
     settings=lora_settings,
     api_key=os.environ["TOGETHER_API_KEY"],
     output_dir=output_dir,

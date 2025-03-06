@@ -2,7 +2,7 @@ from typing import Sequence, TypedDict, Literal
 from dataclasses import dataclass, field, asdict, replace
 import yaml
 import os
-from .datasets import Dataset, Convos, HubConvos, JsonlConvos
+from .datasets import Dataset, Convos, HubMessageConvos, JsonlConvos, HubInstructConvos
 from .lora import LoraSettings
 
 @dataclass
@@ -85,6 +85,28 @@ class AxolotlJsonlConvos:
     split: str = "train"
     type: str = "chat_template"
 
+class PropertyMappings(TypedDict):
+    role: str
+    content: str
+
+@dataclass
+class AxolotlHubConvos:
+    path: str
+    field_messages: str
+    message_property_mappings: PropertyMappings
+    type: str = "chat_template"
+    chat_template: str = "tokenizer_default"
+
+class InstructType(TypedDict):
+    field_instruction: str
+    field_input: str
+    field_output: str
+
+@dataclass
+class AxolotlHubInstructions:
+    path: str
+    type: InstructType
+
 class FsdpConf(TypedDict):
     fsdp_limit_all_gathers: bool
     fsdp_sync_module_states: bool
@@ -155,16 +177,32 @@ class Config(BaseConfig):
             ],
         )
 
-def convert_dataset(dataset: HubConvos | JsonlConvos):
-    if isinstance(dataset, HubConvos):
-        return dataset
+def convert_dataset(dataset: HubMessageConvos | JsonlConvos | HubInstructConvos):
+    if isinstance(dataset, HubMessageConvos):
+        return AxolotlHubConvos(
+            path=dataset.name,
+            field_messages=dataset.messages_field,
+            message_property_mappings={
+                "role": dataset.role_field,
+                "content": dataset.content_field,
+            },
+        )
+    elif isinstance(dataset, HubInstructConvos):
+        return AxolotlHubInstructions(
+            path=dataset.name,
+            type={
+                "field_input": dataset.input_field,
+                "field_instruction": dataset.instruction_field,
+                "field_output": dataset.output_field,
+            },
+        )
     else:
         return AxolotlJsonlConvos(path=dataset.path)
 
 @dataclass
 class FullConfig(BaseConfig):
-    datasets: Sequence[AxolotlJsonlConvos | HubConvos]
-    test_datasets: Sequence[AxolotlJsonlConvos | HubConvos]
+    datasets: Sequence[AxolotlJsonlConvos | AxolotlHubConvos | AxolotlHubInstructions]
+    test_datasets: Sequence[AxolotlJsonlConvos | AxolotlHubConvos | AxolotlHubInstructions]
     model_type: str
     wandb_project: str | None
     fsdp: Sequence[str] | None
@@ -218,10 +256,11 @@ class FullConfig(BaseConfig):
         with open(path, "w") as f:
             f.write(file_contents)
 
-def rewrite_ds_paths(convos: AxolotlJsonlConvos | HubConvos):
-    if isinstance(convos, HubConvos):
+def rewrite_ds_paths(convos: AxolotlJsonlConvos | AxolotlHubConvos | AxolotlHubInstructions):
+    if isinstance(convos, AxolotlHubConvos):
         return
-
+    if isinstance(convos, AxolotlHubInstructions):
+        return
     convos.path = "./" + convos.path
 
 @dataclass
