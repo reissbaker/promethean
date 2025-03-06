@@ -57,6 +57,8 @@ class OpenAiCompatClient(ChatClient):
                 and "content" in json_data["choices"][0]["delta"]
             ):
                 content += json_data["choices"][0]["delta"]["content"]
+            elif "error" in json_data:
+                raise Exception(json_data["error"])
 
         return [
             {
