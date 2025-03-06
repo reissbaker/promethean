@@ -27,6 +27,13 @@ models](https://glhf.chat/pricing#Multi-LoRA) at cheap per-token prices that
 are equivalent to the underlying base models — typically this is a lot cheaper
 than renting out enough GPUs to run a full-parameter finetune.
 
+You can do much more than just improving at benchmarks, though; you can modify
+models pretty much however you want. For example, [this 70b
+LoRA](https://huggingface.co/reissbaker/llama-3.1-70b-abliterated-lora)
+uncensors Llama 3.1 70B by distilling from a larger uncensored model, something
+that isn't possible with prompt engineering alone.
+
+
 #### Table of Contents:
 
 * [Extracting distillation data](#extracting-distillation-data)
