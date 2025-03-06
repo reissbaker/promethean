@@ -1,11 +1,18 @@
 ![unfat](./unfat.png)
 
-Easily extract prompt/completion datasets from models and auto-distill smaller,
-slimmer LoRAs from the original models. Automates training Llama 3.1-based
-LoRAs with known-good configs for up to 8192 tokens, so you don't have to think
-about VRAM, batch sizes, gradient accumulation steps, or any of the
-system-level details of model training and can focus on curating good datasets
-and selecting training parameters.
+Automates training small, slim Llama 3.1-based LoRAs with known-good configs
+for up to 8192 tokens, so you don't have to think about VRAM, batch sizes,
+gradient accumulation steps, or any of the system-level details of model
+training and can focus on curating good datasets and selecting training
+parameters. Automatically handles multi-GPU training for you when necessary!
+
+Includes helpers for:
+
+* Extracting distillation data from existing models
+* Pulling training data from Hugging Face datasets and/or JSONL files
+* Training models with known-good configurations on your own GPUs, or on
+  [Together.ai](https://together.ai)'s cloud-hosted finetuning platform
+* Tracking training and eval progress on [Weights & Biases](https://wandb.ai/)
 
 ### Why LoRAs?
 
@@ -20,13 +27,17 @@ models](https://glhf.chat/pricing#Multi-LoRA) at cheap per-token prices that
 are equivalent to the underlying base models — typically this is a lot cheaper
 than renting out enough GPUs to run a full-parameter finetune.
 
-* [Example](#example)
+#### Table of Contents:
+
+* [Extracting distillation data](#extracting-distillation-data)
 * [Finetune using Axolotl](#finetune-using-axolotl)
 * [Finetune using Together.ai](#finetune-using-togetherai)
-* [Anthropic-compatible clients](#anthropic-compatible-clients)
+* [Run locally with Ollama](#run-locally-with-ollama)
+* [Run on GLHF](#run-on-glhf)
 * [Tracking with Weights & Biases](#tracking-with-weights--biases)
+* [Anthropic-compatible clients](#anthropic-compatible-clients)
 
-## Example
+## Extracting distillation data
 
 Let's train a quick Llama 3.1 8B Instruct LoRA by distilling DeepSeek-R1.
 First, we'll get some datasets and extract completions from R1 by querying the
@@ -34,9 +45,7 @@ First, we'll get some datasets and extract completions from R1 by querying the
 
 ```python
 from unfat.datasets import hub_prompts, hub_subsets, HubSplit, Dataset, HubSubset
-from unfat.extract import Extractor, ClientOpts
-from unfat.lora import LoraSettings, LoraCloudTrainer
-from unfat.together import llama_8b_together
+from unfat.extract import Extractor
 from unfat.client import OpenAiCompatClient
 import os
 
@@ -148,6 +157,9 @@ If you don't have machines of this size yourself, we recommend using
 To generate the configs:
 
 ```python
+from unfat.axolotl import llama_3_1_8b_axolotl
+from unfat.lora import LoraSettings
+
 lora_settings = LoraSettings(
     rank=32,
     alpha=16,
@@ -179,6 +191,9 @@ create an account and export a `TOGETHER_API_KEY` in your shell environment.
 Then you can simply do as follows:
 
 ```python
+from unfat.together import llama_8b_together
+from unfat.lora import LoraSettings
+
 train_config = llama_8b_together(
     output_dir=output_dir,
     dataset=extractor.output_dataset(),
@@ -195,21 +210,14 @@ uploaded_files = together_config.upload_files()
 together_config.finetune(uploaded_files)
 ```
 
-This should take around 10mins and cost around $6 in credits:
+This should take around 10mins and cost around $6 in credits.
 
-## Anthropic-compatible clients
-
-Unfat also supports distilling from Anthropic-compatible APIs. Instead of using
-the `OpenAiCompatClient`, use the `AnthropicCompatClient`:
-
-```python
-AnthropicCompatClient(
-    model="claude-3-7-sonnet-20250219",
-    max_tokens=4096,
-    thinking_budget=2048,
-    api_key=os.environ["ANTHROPIC_API_KEY"],
-)
-```
+Once it's done, you can log into your Together account and download the final
+LoRA checkpoint. Together (unfortunately) generates an invalid
+`adapter_config.json`: it sets `base_model_name_or_path` to an
+internally-hosted model rather than the actual base model; make sure to rewrite
+that to `"meta-llama/Meta-Llama-3.1-8B-Instruct"` before publishing or pushing
+to Hugging Face.
 
 ## Tracking with Weights & Biases
 
@@ -230,3 +238,65 @@ lora_settings = LoraSettings(
 The `wandb_api_key` will be automatically used by the Together finetuner, but
 for the Axolotl trainer, you'll have to make sure to export a `WANDB_API_KEY`
 environment variable wherever you run the Axolotl config.
+
+## Run locally with Ollama
+
+First, you'll need to convert the LoRA to GGUF using
+[llama.cpp](https://github.com/ggml-org/llama.cpp). Clone the repo and install
+its dependencies:
+
+```bash
+git clone git@github.com:ggml-org/llama.cpp.git
+cd llama.cpp
+
+# Install Python deps
+python -m venv llamacpp
+source llamacpp/bin/activate
+python -m pip install -r requirements.txt
+```
+
+Then, convert the LoRA adapter to GGUF:
+
+```bash
+python convert-lora-to-gguf ./path-to-your-lora-directory
+```
+
+Next, create an Ollama `Modelfile` file with the following contents:
+
+```
+FROM modelname:version # for example: llama-3.1:8b
+ADAPTER ./path-to-gguf-file
+```
+
+Finally, register your new model locally:
+
+```bash
+ollama create your-model-name -f ./Modelfile
+```
+
+Finally, run:
+
+```bash
+ollama serve
+```
+
+To serve your API.
+
+## Run on GLHF
+
+Push your model to Hugging Face, and then copy+paste the link to your Hugging
+Face repo into [GLHF](https://glhf.chat). That's it!
+
+## Anthropic-compatible clients
+
+Unfat also supports distilling from Anthropic-compatible APIs. Instead of using
+the `OpenAiCompatClient`, use the `AnthropicCompatClient`:
+
+```python
+AnthropicCompatClient(
+    model="claude-3-7-sonnet-20250219",
+    max_tokens=4096,
+    thinking_budget=2048,
+    api_key=os.environ["ANTHROPIC_API_KEY"],
+)
+```
