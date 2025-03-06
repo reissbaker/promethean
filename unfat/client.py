@@ -113,14 +113,17 @@ class AnthropicCompatClient(ChatClient):
             retries=self.retries,
         ):
             json_data = json.loads(line)
-            if "type" in json_data and json_data["type"] == "content_block_delta":
-                if json_data["delta"]["type"] == "text_delta":
-                    content += json_data["delta"]["text"]
-                if json_data["delta"]["type"] == "thinking_delta":
-                    if thoughts is None:
-                        thoughts = json_data["delta"]["thinking"]
-                    else:
-                        thoughts = thoughts + json_data["delta"]["thinking"]
+            if "type" in json_data:
+                if json_data["type"] == "error":
+                    raise Exception(json_data["error"])
+                elif json_data["type"] == "content_block_delta":
+                    if json_data["delta"]["type"] == "text_delta":
+                        content += json_data["delta"]["text"]
+                    if json_data["delta"]["type"] == "thinking_delta":
+                        if thoughts is None:
+                            thoughts = json_data["delta"]["thinking"]
+                        else:
+                            thoughts = thoughts + json_data["delta"]["thinking"]
 
         return [
             {
@@ -151,6 +154,8 @@ async def make_request(
                             if line == 'data: [DONE]':
                                 break
                             yield line[6:]
+                        elif line.startswith('{'):
+                            yield line
         except Exception as e:
             if attempt == retries - 1:
                 print(f"Failed after {retries} attempts: {e}")
