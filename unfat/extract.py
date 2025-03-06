@@ -13,7 +13,6 @@ from .client import ChatClient
 
 @dataclass
 class Extractor:
-    teacher: str
     max_concurrent: int
     output_dir: str
     client: ChatClient
@@ -90,7 +89,6 @@ async def stream_with_concurrency(
 async def process_prompts(
     max_concurrent: int,
     prompts: Prompts,
-    teacher: str,
     client: ChatClient,
 ):
     header_name = prompts.output_path[:40]
@@ -101,7 +99,6 @@ async def process_prompts(
             async def process_prompt(prompt):
                 return await client.chat(
                     session=session,
-                    model=teacher,
                     prompt=prompt,
                 )
 
@@ -128,7 +125,6 @@ async def generate_for_datasets(config: Extractor, datasets: Sequence[Prompts]):
             async for dialog in process_prompts(
                 prompts=prompts,
                 max_concurrent=config.max_concurrent,
-                teacher=config.teacher,
                 client=config.client,
             ):
                 f.write(json.dumps({ "messages": dialog }))

@@ -8,10 +8,10 @@ import os
 
 output_dir = "output"
 extractor = Extractor(
-    teacher="hf:deepseek-ai/DeepSeek-R1",
     max_concurrent=30,
     output_dir=output_dir,
     client=OpenAiCompatClient(
+        model="hf:deepseek-ai/DeepSeek-R1",
         base_url="https://glhf.chat/api/openai/v1",
         api_key=os.environ["GLHF_API_KEY"],
     ),

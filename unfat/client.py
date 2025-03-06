@@ -12,7 +12,6 @@ class ChatClient(Protocol):
     async def chat(
         self,
         session: aiohttp.ClientSession,
-        model: str,
         prompt: str
     ) -> Sequence[Message]: ...
 
@@ -21,13 +20,13 @@ class OpenAiCompatClient(ChatClient):
     """An OpenAI-compatible API client"""
     api_key: str
     base_url: str
+    model: str
     temperature: float = 1.0
     retries: int = 3
 
     async def chat(
         self,
         session: aiohttp.ClientSession,
-        model: str,
         prompt: str
     ) -> Sequence[Message]:
         url = f"{self.base_url}/chat/completions"
@@ -42,7 +41,7 @@ class OpenAiCompatClient(ChatClient):
             url=url,
             headers=headers,
             payload={
-                "model": model,
+                "model": self.model,
                 "messages": [{"role": "user", "content": prompt}],
                 "stream": True,
                 "temperature": self.temperature,
@@ -77,6 +76,7 @@ class AnthropicCompatClient(ChatClient):
     down thinking tokens and outputs them inside <think> tags in the assistant
     response object"""
     api_key: str
+    model: str
     max_tokens: int
     thinking_budget: None | int = None
     base_url: str = "https://api.anthropic.com/v1"
@@ -86,7 +86,6 @@ class AnthropicCompatClient(ChatClient):
     async def chat(
         self,
         session: aiohttp.ClientSession,
-        model: str,
         prompt: str
     ) -> Sequence[Message]:
         url = f"{self.base_url}/messages"
@@ -102,7 +101,7 @@ class AnthropicCompatClient(ChatClient):
             url=url,
             headers=headers,
             payload={
-                "model": model,
+                "model": self.model,
                 "messages": [{"role": "user", "content": prompt}],
                 "stream": True,
                 "temperature": self.temperature,
