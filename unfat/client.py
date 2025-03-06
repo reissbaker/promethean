@@ -49,7 +49,7 @@ class OpenAiCompatClient(ChatClient):
             },
             retries=self.retries,
         ):
-            json_data = json.loads(line[6:])
+            json_data = json.loads(line)
             if (
                 "choices" in json_data
                 and json_data["choices"]
@@ -112,7 +112,7 @@ class AnthropicCompatClient(ChatClient):
             },
             retries=self.retries,
         ):
-            json_data = json.loads(line[6:])
+            json_data = json.loads(line)
             if "type" in json_data and json_data["type"] == "content_block_delta":
                 if json_data["delta"]["type"] == "text_delta":
                     content += json_data["delta"]["text"]
