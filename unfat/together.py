@@ -5,6 +5,38 @@ from .datasets import Dataset, Convos, convo_paths
 from .lora import LoraSettings
 from together import Together
 
+def llama_3_1_8b_together(
+    dataset: Dataset[Convos],
+    settings: LoraSettings,
+    api_key: str,
+    output_dir: str,
+):
+    """Given a dataset and some settings, returns a Together config to train a
+    Llama 3.1 8B Instruct LoRA"""
+    return TogetherConfig(
+        base_model="meta-llama/Meta-Llama-3.1-8B-Instruct-Reference",
+        api_key=api_key,
+        lora_settings=settings,
+        dataset=dataset,
+        output_dir=output_dir,
+    )
+
+def llama_3_1_70b_together(
+    dataset: Dataset[Convos],
+    settings: LoraSettings,
+    api_key: str,
+    output_dir: str,
+):
+    """Given a dataset and some settings, returns a Together config to train a
+    Llama 3.1 8B Instruct LoRA"""
+    return TogetherConfig(
+        base_model="meta-llama/Meta-Llama-3.1-70B-Instruct-Reference",
+        api_key=api_key,
+        lora_settings=settings,
+        dataset=dataset,
+        output_dir=output_dir,
+    )
+
 @dataclass
 class TogetherUploadData:
     train_file_id: str
@@ -62,18 +94,3 @@ class TogetherConfig:
             wandb_project_name=self.lora_settings.wandb_project,
             wandb_api_key=self.lora_settings.wandb_api_key,
         )
-
-
-def llama_8b_together(
-    dataset: Dataset[Convos],
-    settings: LoraSettings,
-    api_key: str,
-    output_dir: str,
-):
-    return TogetherConfig(
-        base_model="meta-llama/Meta-Llama-3.1-8B-Instruct-Reference",
-        api_key=api_key,
-        lora_settings=settings,
-        dataset=dataset,
-        output_dir=output_dir,
-    )

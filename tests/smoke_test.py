@@ -1,8 +1,8 @@
 from unfat.datasets import hub_prompts, hub_subsets, HubSplit, Dataset, HubSubset
 from unfat.extract import Extractor, ClientOpts
 from unfat.lora import LoraSettings
-from unfat.axolotl import llama_8b_axolotl, LoraCloudTrainer
-from unfat.together import llama_8b_together
+from unfat.axolotl import llama_3_1_8b_axolotl, LoraCloudTrainer
+from unfat.together import llama_3_1_8b_together
 import os
 
 output_dir = "output"
@@ -91,7 +91,7 @@ lora_settings = LoraSettings(
     wandb_api_key=os.environ["WANDB_API_KEY"],
 )
 
-train_config = llama_8b_axolotl(
+train_config = llama_3_1_8b_axolotl(
     dataset=extractor.output_dataset(),
     settings=lora_settings,
     cloud=LoraCloudTrainer(provider="modal", timeout=86400),
@@ -101,7 +101,7 @@ train_config = llama_8b_axolotl(
 extractor.run()
 train_config.save(output_dir)
 
-together_config = llama_8b_together(
+together_config = llama_3_1_8b_together(
     dataset=extractor.output_dataset(),
     settings=lora_settings,
     api_key=os.environ["TOGETHER_API_KEY"],

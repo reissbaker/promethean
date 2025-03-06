@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 @dataclass
 class LoraSettings:
+    """Basic LoRA training settings used by all training regimes"""
     rank: int
     alpha: int
     num_epochs: int
