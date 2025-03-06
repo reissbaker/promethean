@@ -9,19 +9,14 @@ from collections.abc import Callable
 import os
 from dataclasses import dataclass
 from .datasets import JsonlConvos, Dataset, Prompts, Convos
-
-@dataclass
-class ClientOpts:
-    base_url: str
-    api_key: str
-    retries: int = 3
+from .client import ChatClient
 
 @dataclass
 class Extractor:
     teacher: str
     max_concurrent: int
     output_dir: str
-    client_opts: ClientOpts
+    client: ChatClient
     dataset: Dataset[Prompts]
 
     def run(self):
@@ -47,52 +42,6 @@ def get_jsonl_convos(datasets: Sequence[Prompts]):
             path=prompts.output_path
         ))
     return output_convos
-
-async def make_request(
-    session, url: str,
-    headers: dict[str, str],
-    payload,
-    retries: int,
-):
-    for attempt in range(retries):
-        try:
-            payload["stream"] = True
-            async with session.post(url, headers=headers, json=payload) as response:
-                content = ""
-                async for line in response.content:
-                    line = line.decode('utf-8').strip()
-                    if line:
-                        # SSE format starts with "data: "
-                        if line.startswith('data: '):
-                            if line == 'data: [DONE]':
-                                break
-                            try:
-                                json_data = json.loads(line[6:])
-                                if (
-                                    'choices' in json_data
-                                    and json_data['choices']
-                                    and 'delta' in json_data['choices'][0]
-                                    and 'content' in json_data['choices'][0]['delta']
-                                ):
-                                    content += json_data['choices'][0]['delta']['content']
-                            except json.JSONDecodeError:
-                                continue
-
-                return [
-                    {
-                        "role": "user",
-                        "content": payload["messages"][0]["content"],
-                    },
-                    {
-                        "role": "assistant",
-                        "content": content
-                    },
-                ]
-        except Exception as e:
-            if attempt == retries - 1:
-                print(f"Failed after {retries} attempts: {e}")
-                raise
-            await asyncio.sleep(1 * (attempt + 1))
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -142,29 +91,18 @@ async def process_prompts(
     max_concurrent: int,
     prompts: Prompts,
     teacher: str,
-    client_opts: ClientOpts,
+    client: ChatClient,
 ):
-    url = f"{client_opts.base_url}/chat/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {client_opts.api_key}"
-    }
-
     header_name = prompts.output_path[:40]
     if header_name != prompts.output_path:
         header_name = f"{header_name}..."
     async with aiohttp.ClientSession() as session:
         with tqdm.tqdm(total=prompts.count(), desc=f"Generating {header_name} completions") as pbar:
             async def process_prompt(prompt):
-                return await make_request(
+                return await client.chat(
                     session=session,
-                    url=url,
-                    headers=headers,
-                    payload={
-                        "model": teacher,
-                        "messages": [{"role": "user", "content": prompt}],
-                    },
-                    retries=client_opts.retries,
+                    model=teacher,
+                    prompt=prompt,
                 )
 
             async for result in stream_with_concurrency(
@@ -191,7 +129,7 @@ async def generate_for_datasets(config: Extractor, datasets: Sequence[Prompts]):
                 prompts=prompts,
                 max_concurrent=config.max_concurrent,
                 teacher=config.teacher,
-                client_opts=config.client_opts,
+                client=config.client,
             ):
                 f.write(json.dumps({ "messages": dialog }))
                 f.write("\n")

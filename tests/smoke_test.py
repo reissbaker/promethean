@@ -1,8 +1,9 @@
 from unfat.datasets import hub_prompts, hub_subsets, HubSplit, Dataset, HubSubset
-from unfat.extract import Extractor, ClientOpts
+from unfat.extract import Extractor
 from unfat.lora import LoraSettings
 from unfat.axolotl import llama_3_1_8b_axolotl, LoraCloudTrainer
 from unfat.together import llama_3_1_8b_together
+from unfat.client import OpenAiCompatClient
 import os
 
 output_dir = "output"
@@ -10,7 +11,7 @@ extractor = Extractor(
     teacher="hf:deepseek-ai/DeepSeek-R1",
     max_concurrent=30,
     output_dir=output_dir,
-    client_opts=ClientOpts(
+    client=OpenAiCompatClient(
         base_url="https://glhf.chat/api/openai/v1",
         api_key=os.environ["GLHF_API_KEY"],
     ),
