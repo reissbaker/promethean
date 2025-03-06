@@ -3,13 +3,30 @@ from dataclasses import dataclass
 from typing import Sequence, TypeVar, Generic, Iterator, cast, Dict
 from collections.abc import Callable
 import json
-import os
 
 T = TypeVar("T")
 @dataclass
 class Dataset(Generic[T]):
     train: Sequence[T]
     eval: Sequence[T] | None = None
+
+    def merge(self, dataset: 'Dataset[T]'):
+        """Merges this dataset with a given dataset, returning a new dataset
+        that's the merge of both"""
+        eval = []
+        if self.eval is not None:
+            eval = [ e for e in self.eval ]
+        if dataset.eval is not None:
+            eval = eval + [ e for e in dataset.eval ]
+
+        return Dataset(
+            train=[
+                t for t in self.train
+            ] + [
+                t for t in dataset.train
+            ],
+            eval=eval if len(eval) > 0 else None,
+        )
 
 @dataclass
 class HubSplit:
@@ -27,12 +44,9 @@ class Prompts:
     count: Callable[[], int]
     items: Callable[[], Iterator[str]]
 
-def get_split_name(split: str | HubSplit):
-    if isinstance(split, HubSplit):
-        return split.name
-    return split
-
 def hub_subsets(name: str, subsets: Sequence[HubSubset], text_field: str):
+    """Given a Hugging Face hub dataset name and a sequence of subsets, returns
+    a set of prompts from the dataset subsets"""
     datasets = [
         cast(HfDataset, load_dataset(
             name,
@@ -76,7 +90,9 @@ def hub_subsets(name: str, subsets: Sequence[HubSubset], text_field: str):
     )
 
 def hub_prompts(name: str, split: str | HubSplit, text_field: str):
-    split_name = split.name if isinstance(split, HubSplit) else split
+    """Given a Hugging Face hub dataset name and a split, returns a set of
+    prompts from the split"""
+    split_name = get_split_name(split)
     ds = cast(HfDataset, load_dataset(name, split=split_name))
     max_rows = split.max_rows if isinstance(split, HubSplit) else None
 
@@ -93,12 +109,14 @@ def hub_prompts(name: str, split: str | HubSplit, text_field: str):
                 break
 
     return Prompts(
-        output_path=f"hub/{name}-{split_name}.jsonl",
+        output_path=hub_split_path(name=name, split=split_name),
         count=count,
         items=items,
     )
 
 def jsonl_prompts(path: str, name: str, text_field: str):
+    """Given a path to a JSONL file of prompts, returns a set of prompts
+    extracted from the JSONL file"""
     def count():
         with open(path, 'r') as f:
             total_lines = sum(1 for _ in f)
@@ -118,10 +136,12 @@ def jsonl_prompts(path: str, name: str, text_field: str):
 
 @dataclass
 class JsonlConvos:
+    """Trainable conversations in JSONL files"""
     path: str
 
 @dataclass
 class HubConvos:
+    """Trainable conversations in Hugging Face hub datasets"""
     name: str
     type: str
     splits: Sequence[str | HubSplit]
@@ -129,10 +149,18 @@ class HubConvos:
 Convos = JsonlConvos | HubConvos
 
 def convo_paths(convos: Sequence[Convos]):
+    """Given a sequence of convos, yields the paths for each one"""
     for convo in convos:
         if isinstance(convo, HubConvos):
             for split in convo.splits:
-                split_name = split.name if isinstance(split, HubSplit) else split
-                yield f"hub/{convo.name}-{split_name}.jsonl"
+                yield hub_split_path(name=convo.name, split=get_split_name(split))
         else:
             yield convo.path
+
+def hub_split_path(name: str, split: str):
+    return f"hub/{name}-{split}.jsonl"
+
+def get_split_name(split: str | HubSplit):
+    if isinstance(split, HubSplit):
+        return split.name
+    return split
