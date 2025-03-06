@@ -148,6 +148,9 @@ class HubConvos:
 
 Convos = JsonlConvos | HubConvos
 
+# TODO this makes no sense, HubConvos don't have a path. You need to download
+# the hub convos and convert them to something useful for the Together trainer,
+# and this is unused for the Axolotl trainer
 def convo_paths(convos: Sequence[Convos]):
     """Given a sequence of convos, yields the paths for each one"""
     for convo in convos:
