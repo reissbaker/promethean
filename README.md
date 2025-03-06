@@ -18,14 +18,15 @@ from unfat.datasets import hub_prompts, hub_subsets, HubSplit, Dataset, HubSubse
 from unfat.extract import Extractor, ClientOpts
 from unfat.lora import LoraSettings, LoraCloudTrainer
 from unfat.together import llama_8b_together
+from unfat.client import OpenAiCompatClient
 import os
 
 output_dir = "output"
 extractor = Extractor(
-    teacher="hf:deepseek-ai/DeepSeek-R1",
     max_concurrent=30,
     output_dir=output_dir,
-    client_opts=ClientOpts(
+    client=OpenAiCompatClient(
+        model="hf:deepseek-ai/DeepSeek-R1",
         base_url="https://glhf.chat/api/openai/v1",
         api_key=os.environ["GLHF_API_KEY"],
     ),
@@ -97,7 +98,7 @@ extractor = Extractor(
 )
 ```
 
-Next, let's run the extraction. This should take around 15mins and cost
+Next, let's run the extraction. This should take around 10mins and cost
 around $7 in API credits:
 
 ```python
@@ -113,7 +114,7 @@ training jobs for you in two ways:
 If you have your own A100/H100 GPUs, we recommend using Axolotl. Otherwise, we
 recommend running the jobs on Together.ai for simplicity.
 
-## Finetune using Axolotl
+### Finetune using Axolotl
 
 [Axolotl](https://github.com/axolotl-ai-cloud/axolotl) is an open-source
 fine-tuning framework. Unfat can automatically generate Axolotl training
@@ -151,7 +152,7 @@ installed and setup Axolotl according to its setup guide, simply run:
 axolotl train ./output/config.yaml
 ```
 
-## Finetune using Together.ai
+### Finetune using Together.ai
 
 If you don't want to manage GPUs yourself, Unfat supports automatically
 uploading and starting jobs on Together.ai's finetuning platform. First,
@@ -176,3 +177,37 @@ together_config.finetune(uploaded_files)
 ```
 
 This should take around 10mins and cost around $6 in credits:
+
+## Anthropic-compatible clients
+
+Unfat also supports distilling from Anthropic-compatible APIs. Instead of using
+the `OpenAiCompatClient`, use the `AnthropicCompatClient`:
+
+```python
+AnthropicCompatClient(
+    model="claude-3-7-sonnet-20250219",
+    max_tokens=4096,
+    thinking_budget=2048,
+    api_key=os.environ["ANTHROPIC_API_KEY"],
+)
+```
+
+## Tracking with Weights & Biases
+
+The `LoraSettings` dataclass can take a W&B project name and API key:
+
+```python
+lora_settings = LoraSettings(
+    rank=32,
+    alpha=16,
+    dropout=0.01,
+    num_epochs=8,
+    learning_rate=4e-4,
+    wandb_project="r1-8b-distill",
+    wandb_api_key=os.environ["WANDB_API_KEY"],
+)
+```
+
+The `wandb_api_key` will be automatically used by the Together finetuner, but
+for the Axolotl trainer, you'll have to make sure to export a `WANDB_API_KEY`
+environment variable wherever you run the Axolotl config.
