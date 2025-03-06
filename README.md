@@ -7,6 +7,25 @@ about VRAM, batch sizes, gradient accumulation steps, or any of the
 system-level details of model training and can focus on curating good datasets
 and selecting training parameters.
 
+### Why LoRAs?
+
+LoRAs are fast and cheap to train, and result in tiny files that can
+efficiently be kept in VRAM, while still significantly improving task
+performance compared to the underlying base model. For example, [this R1
+distill LoRA](https://huggingface.co/reissbaker/r1-llama-70b-distill-lora) of
+Llama 3.1 70B Instruct improves MATH-500 and GPQA-Diamond performance by 50%,
+and doubles AIME24 performance, compared to the untrained model. Sites like
+[GLHF](https://glhf.chat) support running arbitrary LoRAs of [certain base
+models](https://glhf.chat/pricing#Multi-LoRA) at cheap per-token prices that
+are equivalent to the underlying base models — typically this is a lot cheaper
+than renting out enough GPUs to run a full-parameter finetune.
+
+* [Example](#example)
+* [Finetune using Axolotl](#finetune-using-axolotl)
+* [Finetune using Together.ai](#finetune-using-togetherai)
+* [Anthropic-compatible clients](#anthropic-compatible-clients)
+* [Tracking with Weights & Biases](#tracking-with-weights--biases)
+
 ## Example
 
 Let's train a quick Llama 3.1 8B Instruct LoRA by distilling DeepSeek-R1.
