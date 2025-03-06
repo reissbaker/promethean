@@ -32,8 +32,10 @@ than renting out enough GPUs to run a full-parameter finetune.
 * [Extracting distillation data](#extracting-distillation-data)
 * [Finetune using Axolotl](#finetune-using-axolotl)
 * [Finetune using Together.ai](#finetune-using-togetherai)
-* [Run locally with Ollama](#run-locally-with-ollama)
 * [Run on GLHF](#run-on-glhf)
+* [Run locally with Ollama](#run-locally-with-ollama)
+* [Training on your own JSONL files](#training-on-your-own-jsonl-files)
+* [Training on Hugging Face datasets](#training-on-hugging-face-datasets)
 * [Tracking with Weights & Biases](#tracking-with-weights--biases)
 * [Anthropic-compatible clients](#anthropic-compatible-clients)
 
@@ -219,25 +221,10 @@ internally-hosted model rather than the actual base model; make sure to rewrite
 that to `"meta-llama/Meta-Llama-3.1-8B-Instruct"` before publishing or pushing
 to Hugging Face.
 
-## Tracking with Weights & Biases
+## Run on GLHF
 
-The `LoraSettings` dataclass can take a W&B project name and API key:
-
-```python
-lora_settings = LoraSettings(
-    rank=32,
-    alpha=16,
-    dropout=0.01,
-    num_epochs=8,
-    learning_rate=4e-4,
-    wandb_project="r1-8b-distill",
-    wandb_api_key=os.environ["WANDB_API_KEY"],
-)
-```
-
-The `wandb_api_key` will be automatically used by the Together finetuner, but
-for the Axolotl trainer, you'll have to make sure to export a `WANDB_API_KEY`
-environment variable wherever you run the Axolotl config.
+Push your model to Hugging Face, and then copy+paste the link to your Hugging
+Face repo into [GLHF](https://glhf.chat). That's it!
 
 ## Run locally with Ollama
 
@@ -282,10 +269,96 @@ ollama serve
 
 To serve your API.
 
-## Run on GLHF
+## Training on your own JSONL files
 
-Push your model to Hugging Face, and then copy+paste the link to your Hugging
-Face repo into [GLHF](https://glhf.chat). That's it!
+You don't just need to distill from larger models! You can also train on local
+JSONL-formatted files. Each line should be a JSON object of the following form:
+
+```
+{ messages: Array<{ role: "user" | "assistant", content: string }> }
+```
+
+The model will learn to produce the `assistant` messages. To train on JSONL
+files, use the following:
+
+```python
+from unfat.datasets import JsonlConvos
+dataset = Dataset(
+  train=[
+    JsonlConvos(path="./path/to/jsonl/file.jsonl"),
+  ]
+)
+```
+
+Datasets can be merged, so if you have some distillation data and a local JSON
+file, you could do something like:
+
+```python
+dataset = extractor.output_dataset().merge(Dataset(
+  train=[
+    JsonlConvos(path="./path/to/jsonl/file.jsonl"),
+  ],
+))
+```
+
+## Training on Hugging Face datasets
+
+You can also train on datasets from the Hugging Face hub. We expose two kinds
+of Hugging Face datasets: instruction-formatted datasets, and
+conversation-formatted datasets. For instruction-formatted datasets, use:
+
+```python
+from unfat.datasets import HubInstructConvos
+
+dataset = HubInstructConvos(
+  name="vicgalle/alpaca-gpt4",
+  splits=["train"],
+
+  instruction_field="instruction", # optional -- this is the default
+  input_field="input", # optional -- this is the default
+  output_field="output", # optional -- this is the default
+)
+```
+
+The model will learn to give the output when prompted with the instruction +
+input fields.
+
+You can also use conversational Hugging Face datasets like so:
+
+```python
+from unfat.datasets import HubMessageConvos
+
+dataset = HubMessageConvos(
+  name="cgato/SlimOrcaDedupCleaned",
+  splits=["train"],
+  messages_field="conversations", # optional -- the default is "messages"
+  role_field="from", # optional -- the default is "role"
+  content_field="value", # optional -- the default is "content"
+  user_role="human", # optional -- the default is "user"
+  assistant_role="gpt", # optional -- the default is "assistant"
+  system_role="system", # optional -- this is the default
+)
+```
+
+## Tracking with Weights & Biases
+
+The `LoraSettings` dataclass can take a W&B project name and API key:
+
+```python
+lora_settings = LoraSettings(
+    rank=32,
+    alpha=16,
+    dropout=0.01,
+    num_epochs=8,
+    learning_rate=4e-4,
+    wandb_project="r1-8b-distill",
+    wandb_api_key=os.environ["WANDB_API_KEY"],
+)
+```
+
+The `wandb_api_key` will be automatically used by the Together finetuner, but
+for the Axolotl trainer, you'll have to make sure to export a `WANDB_API_KEY`
+environment variable wherever you run the Axolotl config.
 
 ## Anthropic-compatible clients
 
