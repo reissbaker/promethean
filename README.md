@@ -1,10 +1,11 @@
 ![unfat](./unfat.png)
 
 Automates training small, slim Llama 3.1-based LoRAs with known-good configs
-for up to 8192 tokens, so you don't have to think about VRAM, batch sizes,
-gradient accumulation steps, or any of the system-level details of model
-training and can focus on curating good datasets and selecting training
-parameters. Automatically handles multi-GPU training for you when necessary!
+for up to 8192 tokens, so you don't have to think about any of the system-level
+details of model training and can focus on curating good datasets and selecting
+training parameters (instead of experimenting with batch sizes and gradient
+accumulation steps just trying to get your training job to run). Automatically
+handles multi-GPU training for you when necessary!
 
 Includes helpers for:
 
@@ -32,7 +33,6 @@ models pretty much however you want. For example, [this 70b
 LoRA](https://huggingface.co/reissbaker/llama-3.1-70b-abliterated-lora)
 uncensors Llama 3.1 70B by distilling from a larger uncensored model, something
 that isn't possible with prompt engineering alone.
-
 
 #### Table of Contents:
 
