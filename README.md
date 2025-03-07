@@ -63,7 +63,7 @@ distilling DeepSeek-R1, or jump around to the sections below:
 
 Let's train a quick Llama 3.1 8B Instruct LoRA by distilling DeepSeek-R1.
 First, we'll get some datasets and extract completions from R1 by querying the
-[glhf.chat](https://glhf.chat) API:
+OpenAI-compatible [glhf.chat](https://glhf.chat) API:
 
 ```python
 from unfat.datasets import hub_prompts, hub_subsets, HubSplit, Dataset, HubSubset
