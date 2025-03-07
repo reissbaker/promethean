@@ -18,6 +18,21 @@ Includes helpers for:
   [Together.ai](https://together.ai)'s cloud-hosted finetuning platform
 * Tracking training and eval progress on [Weights & Biases](https://wandb.ai/)
 
+### Comparison with other tools
+
+* __Unsloth__: While Unsloth is *very* fast (hence the name), it only supports
+  single-GPU training: so you can't train an unquantized 70B model, and
+  [quantizing past FP8 can significantly harm model
+  performance](https://arxiv.org/pdf/2411.04330). It's also a lower-level
+  Python API that assumes significantly more knowledge of the LLM training
+  ecosystem.
+* __Axolotl__: Axolotl supports many, many different models and ways of
+  training models... But requires lots of configuration, along with
+  trial-and-error around system performance tuning of things like batch sizes,
+  sharding, and gradient accumulation steps in order to get jobs to run. Unfat
+  can generate known-good Axolotl configurations for you, so you don't have to
+  do that yourself.
+
 ### Why LoRAs?
 
 LoRAs are fast and cheap to train, and result in tiny files that can
@@ -36,21 +51,6 @@ models pretty much however you want. For example, [this 70b
 LoRA](https://huggingface.co/reissbaker/llama-3.1-70b-abliterated-lora)
 uncensors Llama 3.1 70B by distilling from a larger uncensored model, something
 that isn't possible with prompt engineering alone.
-
-### Comparison with other tools
-
-* __Unsloth__: While Unsloth is *very* fast (hence the name), it only supports
-  single-GPU training: so you can't train an unquantized 70B model, and
-  [quantizing past FP8 can significantly harm model
-  performance](https://arxiv.org/pdf/2411.04330). It's also a lower-level
-  Python API that assumes significantly more knowledge of the LLM training
-  ecosystem.
-* __Axolotl__: Axolotl supports many, many different models and ways of
-  training models... But requires lots of configuration, along with
-  trial-and-error around system performance tuning of things like batch sizes,
-  sharding, and gradient accumulation steps in order to get jobs to run. Unfat
-  can generate known-good Axolotl configurations for you, so you don't have to
-  do that yourself.
 
 ## Getting started
 
