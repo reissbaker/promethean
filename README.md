@@ -167,6 +167,42 @@ recommend running the jobs on Together.ai for simplicity.
 
 ## Starting a finetune job
 
+### Finetune using Together.ai
+
+If you don't want to manage GPUs yourself, Unfat supports automatically
+uploading and starting jobs on Together.ai's finetuning platform. First,
+create an account and export a `TOGETHER_API_KEY` in your shell environment.
+Then you can simply do as follows:
+
+```python
+from unfat.together import llama_8b_together
+from unfat.lora import LoraSettings
+
+train_config = llama_8b_together(
+    output_dir=output_dir,
+    dataset=extractor.output_dataset(),
+    settings=LoraSettings(
+        rank=32,
+        alpha=16,
+        dropout=0.01,
+        num_epochs=8,
+        learning_rate=4e-4,
+    ),
+    api_key=os.environ["TOGETHER_API_KEY"],
+)
+uploaded_files = together_config.upload_files()
+together_config.finetune(uploaded_files)
+```
+
+This should take around 10mins and cost around $6 in credits.
+
+Once it's done, you can log into your Together account and download the final
+LoRA checkpoint. Together (unfortunately) generates an invalid
+`adapter_config.json`: it sets `base_model_name_or_path` to an
+internally-hosted model rather than the actual base model; make sure to rewrite
+that to `"meta-llama/Meta-Llama-3.1-8B-Instruct"` before publishing or pushing
+to Hugging Face.
+
 ### Finetune using Axolotl
 
 [Axolotl](https://github.com/axolotl-ai-cloud/axolotl) is an open-source
@@ -207,42 +243,6 @@ installed and setup Axolotl according to its setup guide, simply run:
 ```bash
 axolotl train ./output/config.yaml
 ```
-
-### Finetune using Together.ai
-
-If you don't want to manage GPUs yourself, Unfat supports automatically
-uploading and starting jobs on Together.ai's finetuning platform. First,
-create an account and export a `TOGETHER_API_KEY` in your shell environment.
-Then you can simply do as follows:
-
-```python
-from unfat.together import llama_8b_together
-from unfat.lora import LoraSettings
-
-train_config = llama_8b_together(
-    output_dir=output_dir,
-    dataset=extractor.output_dataset(),
-    settings=LoraSettings(
-        rank=32,
-        alpha=16,
-        dropout=0.01,
-        num_epochs=8,
-        learning_rate=4e-4,
-    ),
-    api_key=os.environ["TOGETHER_API_KEY"],
-)
-uploaded_files = together_config.upload_files()
-together_config.finetune(uploaded_files)
-```
-
-This should take around 10mins and cost around $6 in credits.
-
-Once it's done, you can log into your Together account and download the final
-LoRA checkpoint. Together (unfortunately) generates an invalid
-`adapter_config.json`: it sets `base_model_name_or_path` to an
-internally-hosted model rather than the actual base model; make sure to rewrite
-that to `"meta-llama/Meta-Llama-3.1-8B-Instruct"` before publishing or pushing
-to Hugging Face.
 
 ## Running your LoRA
 
