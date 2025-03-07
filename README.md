@@ -372,6 +372,8 @@ You don't need to source your prompts from Hugging Face! If you have your own
 prompts in a JSONL file, you can pass them into the extractor like so:
 
 ```python
+from unfat.datasets import jsonl_prompts
+
 Extractor(
   dataset=Dataset(
     train=[
