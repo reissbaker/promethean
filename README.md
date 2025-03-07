@@ -191,10 +191,10 @@ create an account and export a `TOGETHER_API_KEY` in your shell environment.
 Then you can simply do as follows:
 
 ```python
-from unfat.together import llama_8b_together
+from unfat.together import llama_3_1_8b_together
 from unfat.lora import LoraSettings
 
-train_config = llama_8b_together(
+train_config = llama_3_1_8b_together(
     output_dir=output_dir,
     dataset=extractor.output_dataset(),
     settings=LoraSettings(
