@@ -37,13 +37,23 @@ LoRA](https://huggingface.co/reissbaker/llama-3.1-70b-abliterated-lora)
 uncensors Llama 3.1 70B by distilling from a larger uncensored model, something
 that isn't possible with prompt engineering alone.
 
-#### Table of Contents:
+## Getting started
+
+Install unfat using `uv` (or your favorite Python package manager):
+
+```bash
+uv init <project-name>
+uv add unfat
+```
+
+Unfat supports distilling from larger models, training on your own data, and a
+few different ways to actually train the models and run them. Feel free to keep
+reading this guide straight through as an example of training a small model by
+distilling DeepSeek-R1, or jump around to the sections below:
 
 * [Extracting distillation data](#extracting-distillation-data)
-* [Finetune using Axolotl](#finetune-using-axolotl)
-* [Finetune using Together.ai](#finetune-using-togetherai)
-* [Run on GLHF](#run-on-glhf)
-* [Run locally with Ollama](#run-locally-with-ollama)
+* [Starting a finetune job](#starting-a-finetune-job)
+* [Running your LoRA](#running-your-lora)
 * [Training on your own JSONL files](#training-on-your-own-jsonl-files)
 * [Training on Hugging Face datasets](#training-on-hugging-face-datasets)
 * [Tracking with Weights & Biases](#tracking-with-weights--biases)
@@ -154,6 +164,8 @@ training jobs for you in two ways:
 If you have your own A100/H100 GPUs, we recommend using Axolotl. Otherwise, we
 recommend running the jobs on Together.ai for simplicity.
 
+## Starting a finetune job
+
 ### Finetune using Axolotl
 
 [Axolotl](https://github.com/axolotl-ai-cloud/axolotl) is an open-source
@@ -231,12 +243,14 @@ internally-hosted model rather than the actual base model; make sure to rewrite
 that to `"meta-llama/Meta-Llama-3.1-8B-Instruct"` before publishing or pushing
 to Hugging Face.
 
-## Run on GLHF
+## Running your LoRA
+
+### Run on GLHF
 
 Push your model to Hugging Face, and then copy+paste the link to your Hugging
 Face repo into [GLHF](https://glhf.chat). That's it!
 
-## Run locally with Ollama
+### Run locally with Ollama
 
 First, you'll need to convert the LoRA to GGUF using
 [llama.cpp](https://github.com/ggml-org/llama.cpp). Clone the repo and install
