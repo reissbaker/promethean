@@ -171,7 +171,7 @@ extractor = Extractor(
 ```
 
 Next, let's run the extraction. This should take around 20mins and cost
-around $20 in API credits:
+around $10 in API credits:
 
 ```python
 extractor.run()
