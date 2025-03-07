@@ -61,10 +61,10 @@ uv init <project-name>
 uv add unfat
 ```
 
-Unfat supports distilling from larger models, training on your own data, and a
-few different ways to actually train the models and run them. Feel free to keep
-reading this guide straight through as an example of training a small model by
-distilling DeepSeek-R1, or jump around to the sections below:
+Unfat supports distilling from larger models and/or training on your own data,
+and a few different ways to actually train the models and run them. Feel free
+to keep reading this guide straight through as an example of training a small
+model by distilling DeepSeek-R1, or jump around to the sections below:
 
 * [Extracting distillation data](#extracting-distillation-data)
 * [Starting a finetune job](#starting-a-finetune-job)
