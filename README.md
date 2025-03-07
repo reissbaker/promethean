@@ -292,7 +292,7 @@ python convert-lora-to-gguf ./path-to-your-lora-directory
 Next, create an Ollama `Modelfile` file with the following contents:
 
 ```
-FROM modelname:version # for example: llama-3.1:8b
+FROM llama-3.1:8b-instruct-fp16
 ADAPTER ./path-to-gguf-file
 ```
 
