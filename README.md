@@ -56,7 +56,7 @@ distilling DeepSeek-R1, or jump around to the sections below:
 * [Running your LoRA](#running-your-lora)
 * [Training on your own JSONL files](#training-on-your-own-jsonl-files)
 * [Training on Hugging Face datasets](#training-on-hugging-face-datasets)
-* [Distilling with your own prompts](#distilling-with-your-own-prompts)
+* [Distilling with your own custom prompts](#distilling-with-your-own-custom-prompts)
 * [Tracking with Weights & Biases](#tracking-with-weights--biases)
 * [Anthropic-compatible clients](#anthropic-compatible-clients)
 
@@ -366,7 +366,7 @@ dataset = HubMessageConvos(
 )
 ```
 
-## Distilling with your own prompts
+## Distilling with your own custom prompts
 
 You don't need to source your prompts from Hugging Face! If you have your own
 prompts in a JSONL file, you can pass them into the extractor like so:
