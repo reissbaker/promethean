@@ -38,13 +38,13 @@ Includes helpers for:
 LoRAs are fast and cheap to train, and result in tiny files that can
 efficiently be kept in VRAM, while still significantly improving task
 performance compared to the underlying base model. For example, [this R1
-distill LoRA](https://huggingface.co/reissbaker/r1-llama-70b-distill-lora) of
-Llama 3.1 70B Instruct improves MATH-500 and GPQA-Diamond performance by 50%,
-and doubles AIME24 performance, compared to the untrained model. Sites like
-[GLHF](https://glhf.chat) support running arbitrary LoRAs of [certain base
-models](https://glhf.chat/pricing#Multi-LoRA) at cheap per-token prices that
-are equivalent to the underlying base models — typically this is a lot cheaper
-than renting out enough GPUs to run a full-parameter finetune.
+distill LoRA](https://huggingface.co/reissbaker/r1-llama-70b-distill-lora)
+built on top of Llama 3.1 70B Instruct improves MATH-500 and GPQA-Diamond
+performance by 50%, and doubles AIME24 performance, compared to the untrained
+model. Sites like [GLHF](https://glhf.chat) support running arbitrary LoRAs of
+[certain base models](https://glhf.chat/pricing#Multi-LoRA) at cheap per-token
+prices that are equivalent to the underlying base models — typically this is a
+lot cheaper than renting out enough GPUs to run a full-parameter finetune.
 
 You can do much more than just improving at benchmarks, though; you can modify
 models pretty much however you want. For example, [this 70b
