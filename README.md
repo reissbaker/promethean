@@ -1,12 +1,14 @@
 ![unfat](./unfat.png)
 
-Automates training small, slim Llama 3.1-based LoRAs with known-good configs
-for up to 8192 tokens, so you don't have to think about any of the system-level
-details of model training and can focus on curating good datasets and selecting
-training parameters (instead of experimenting with batch sizes and gradient
-accumulation steps just trying to get your training job to run). Automatically
-handles multi-GPU training for you when necessary! Supports both Llama 3.1 8B
-Instruct, and Llama 3.1 70B Instruct.
+Automates training small, slim Llama 3.1-based LoRA finetunes!
+
+Sets up known-good training configs for up to 8192 tokens, so you don't have to
+think about any of the system-level details of model training and can focus on
+curating good datasets and selecting training parameters (instead of
+experimenting with batch sizes and gradient accumulation steps just trying to
+get your training job to run). Automatically handles multi-GPU training for you
+when necessary! Supports both Llama 3.1 8B Instruct, and Llama 3.1 70B
+Instruct.
 
 Includes helpers for:
 
