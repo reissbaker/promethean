@@ -11,7 +11,6 @@ class Message(TypedDict):
 class ChatClient(Protocol):
     async def chat(
         self,
-        session: aiohttp.ClientSession,
         prompt: str
     ) -> Sequence[Message]: ...
 
@@ -26,7 +25,6 @@ class OpenAiCompatClient(ChatClient):
 
     async def chat(
         self,
-        session: aiohttp.ClientSession,
         prompt: str
     ) -> Sequence[Message]:
         url = f"{self.base_url}/chat/completions"
@@ -37,7 +35,6 @@ class OpenAiCompatClient(ChatClient):
         content = ""
 
         async for line in make_request(
-            session=session,
             url=url,
             headers=headers,
             payload={
@@ -85,7 +82,6 @@ class AnthropicCompatClient(ChatClient):
 
     async def chat(
         self,
-        session: aiohttp.ClientSession,
         prompt: str
     ) -> Sequence[Message]:
         url = f"{self.base_url}/messages"
@@ -97,7 +93,6 @@ class AnthropicCompatClient(ChatClient):
         content = ""
         thoughts = None
         async for line in make_request(
-            session=session,
             url=url,
             headers=headers,
             payload={
@@ -138,7 +133,6 @@ class AnthropicCompatClient(ChatClient):
         ]
 
 async def make_request(
-    session: aiohttp.ClientSession,
     url: str,
     headers: dict[str, str],
     payload: Any,
@@ -146,17 +140,18 @@ async def make_request(
 ):
     for attempt in range(retries):
         try:
-            async with session.post(url, headers=headers, json=payload) as response:
-                async for linebytes in response.content:
-                    line = linebytes.decode('utf-8').strip()
-                    if line:
-                        # SSE format starts with "data: "
-                        if line.startswith('data: '):
-                            if line == 'data: [DONE]':
-                                break
-                            yield line[6:]
-                        elif line.startswith('{'):
-                            yield line
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, headers=headers, json=payload) as response:
+                    async for linebytes in response.content:
+                        line = linebytes.decode('utf-8').strip()
+                        if line:
+                            # SSE format starts with "data: "
+                            if line.startswith('data: '):
+                                if line == 'data: [DONE]':
+                                    break
+                                yield line[6:]
+                            elif line.startswith('{'):
+                                yield line
         except Exception as e:
             if attempt == retries - 1:
                 print(f"Failed after {retries} attempts: {e}")

@@ -94,21 +94,17 @@ async def process_prompts(
     header_name = prompts.output_path[:40]
     if header_name != prompts.output_path:
         header_name = f"{header_name}..."
-    async with aiohttp.ClientSession() as session:
-        with tqdm.tqdm(total=prompts.count(), desc=f"Generating {header_name} completions") as pbar:
-            async def process_prompt(prompt):
-                return await client.chat(
-                    session=session,
-                    prompt=prompt,
-                )
+    with tqdm.tqdm(total=prompts.count(), desc=f"Generating {header_name} completions") as pbar:
+        async def process_prompt(prompt):
+            return await client.chat(prompt)
 
-            async for result in stream_with_concurrency(
-                max_concurrent,
-                prompts.items(),
-                process_prompt,
-                pbar
-            ):
-                yield result
+        async for result in stream_with_concurrency(
+            max_concurrent,
+            prompts.items(),
+            process_prompt,
+            pbar
+        ):
+            yield result
 
 async def generate_for_datasets(config: Extractor, datasets: Sequence[Prompts]):
     output_convos: List[JsonlConvos] = []
