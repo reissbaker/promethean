@@ -22,6 +22,7 @@ class OpenAiCompatClient(ChatClient):
     model: str
     temperature: float = 1.0
     retries: int = 3
+    max_tokens: int | None = None
 
     async def chat(
         self,
@@ -42,6 +43,7 @@ class OpenAiCompatClient(ChatClient):
                 "messages": [{"role": "user", "content": prompt}],
                 "stream": True,
                 "temperature": self.temperature,
+                "max_tokens": self.max_tokens,
             },
             retries=self.retries,
         ):
