@@ -142,6 +142,7 @@ async def make_request(
 ):
     for attempt in range(retries):
         try:
+            got_bytes = False
             async with aiohttp.ClientSession() as session:
                 async with session.post(url, headers=headers, json=payload) as response:
                     async for linebytes in response.content:
@@ -150,11 +151,14 @@ async def make_request(
                             # SSE format starts with "data: "
                             if line.startswith('data: '):
                                 if line == 'data: [DONE]':
-                                    return
+                                    break
+                                got_bytes = True
                                 yield line[6:]
                             elif line.startswith('{'):
+                                got_bytes = True
                                 yield line
-            return
+            if got_bytes:
+                return
         except Exception as e:
             if attempt == retries - 1:
                 print(f"Failed after {retries} attempts: {e}")
