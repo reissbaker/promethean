@@ -150,7 +150,7 @@ async def make_request(
                             # SSE format starts with "data: "
                             if line.startswith('data: '):
                                 if line == 'data: [DONE]':
-                                    break
+                                    return
                                 yield line[6:]
                             elif line.startswith('{'):
                                 yield line
