@@ -154,6 +154,7 @@ async def make_request(
                                 yield line[6:]
                             elif line.startswith('{'):
                                 yield line
+            return
         except Exception as e:
             if attempt == retries - 1:
                 print(f"Failed after {retries} attempts: {e}")
