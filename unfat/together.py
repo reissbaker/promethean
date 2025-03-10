@@ -66,7 +66,7 @@ class TogetherConfig:
         train_file_id = client.files.upload(file=train_path).id
         eval_file_id = None
 
-        if self.dataset.eval is not None:
+        if self.dataset.eval is not None and len(self.dataset.eval) > 0:
             eval_path = os.path.join(self.output_dir, "together-eval.jsonl")
             with open(eval_path, "w") as f:
                 for line in convo_lines(self.output_dir, self.dataset.eval):
